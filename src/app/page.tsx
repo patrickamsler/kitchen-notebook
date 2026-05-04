@@ -1,66 +1,62 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { Suspense } from 'react';
+import { getRecipes } from '@/data/store';
+import RecipeList from '@/features/recipes/RecipeList';
+import type { Recipe, RecipeType } from '@/lib/types';
 
-export default function Home() {
+function filterAndSort(
+  recipes: Recipe[],
+  query: string,
+  types: RecipeType[],
+  sort: string
+): { filtered: Recipe[]; counts: Record<string, number> } {
+  const q = query.trim().toLowerCase();
+  const searched = q ? recipes.filter(r => r.title.toLowerCase().includes(q)) : recipes;
+
+  const counts: Record<string, number> = { __all: searched.length };
+  for (const r of searched) {
+    for (const t of r.types) {
+      counts[t] = (counts[t] ?? 0) + 1;
+    }
+  }
+
+  let list = types.length > 0
+    ? searched.filter(r => r.types.some(t => types.includes(t)))
+    : searched;
+
+  const sorted = [...list];
+  switch (sort) {
+    case 'oldest': sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()); break;
+    case 'az': sorted.sort((a, b) => a.title.localeCompare(b.title)); break;
+    case 'za': sorted.sort((a, b) => b.title.localeCompare(a.title)); break;
+    default: sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  return { filtered: sorted, counts };
+}
+
+interface PageProps {
+  searchParams: Promise<{ q?: string; type?: string; sort?: string }>;
+}
+
+export default async function HomePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const query = params.q ?? '';
+  const activeTypes = params.type ? (params.type.split(',') as RecipeType[]) : [];
+  const sort = params.sort ?? 'newest';
+
+  const recipes = await getRecipes();
+  const { filtered, counts } = filterAndSort(recipes, query, activeTypes, sort);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <Suspense>
+      <RecipeList
+        recipes={recipes}
+        filtered={filtered}
+        activeTypes={activeTypes}
+        sort={sort}
+        query={query}
+        counts={counts}
+      />
+    </Suspense>
   );
 }

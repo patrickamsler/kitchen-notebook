@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Kitchen Notebook
+
+A personal recipe book with a shopping list. Built with Next.js 14 App Router, TypeScript, and styled-components.
+
+## Features
+
+- **Recipe list** — searchable, filterable by type (starter, main, dessert, italian, asian), sortable
+- **Recipe detail** — ingredient check-off during cooking, one-tap add to shopping list
+- **Recipe form** — create and edit recipes with dynamic ingredient and step rows
+- **Shopping list** — grouped by recipe, optimistic toggling, clear checked / empty all
+- **Settings** — accent colour (Terracotta / Sage / Plum) and title scale, persisted to localStorage
+
+## Stack
+
+- **Next.js 16** with App Router and TypeScript strict mode
+- **styled-components v6** with SSR registry and full ThemeProvider typing
+- **Server Components** for data fetching; **Server Actions** for mutations
+- **useOptimistic** for instant shopping list toggles
+- **File-based persistence** — data stored in `.data/store.json`, seeded on first run
+- **Google Fonts** — Fraunces (variable, serif), Inter (sans), JetBrains Mono
+
+## Routes
+
+| Route | Description |
+|-------|-------------|
+| `/` | Recipe list with search, filter chips, sort |
+| `/recipes/new` | New recipe form |
+| `/recipes/[id]` | Recipe detail with ingredients and method |
+| `/recipes/[id]/edit` | Edit recipe form |
+| `/shopping` | Shopping list grouped by recipe |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The app is seeded with five example recipes on first run. Data persists across restarts via `.data/store.json`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project Structure
 
-## Learn More
+```
+src/
+  app/                    # Next.js App Router pages + Server Actions
+    actions/              # recipes.ts, shopping.ts ('use server')
+    recipes/[id]/         # detail + edit pages
+    shopping/             # shopping list page
+  data/
+    store.ts              # in-memory + JSON-file persistence (server-only)
+  features/
+    masthead/             # Masthead (server), MastheadShell (client), SettingsMenu
+    recipes/              # RecipeList, RecipeCard, RecipeForm, RecipeDetailClient, FilterBar, SearchBar
+    shopping/             # ShoppingList, ShoppingItemRow, ShoppingPill
+  lib/
+    types.ts              # Recipe, Ingredient, Step, ShoppingItem, Tweaks
+    seed.ts               # Five example recipes
+    uid.ts                # Random ID helper
+  providers/
+    Providers.tsx          # ThemeProvider + GlobalStyle + TweaksProvider
+    StyledComponentsRegistry.tsx  # SSR style injection
+    TweaksProvider.tsx     # Accent + title scale context
+  theme/
+    theme.ts              # Design tokens (colors, fonts, radii, shadows)
+    GlobalStyle.ts        # Body resets, paper grain, fadeSlide keyframe
+    styled.d.ts           # DefaultTheme augmentation
+  components/
+    icons/Icon.tsx        # All SVG icons as TSX components
+    ui/                   # Button, IconButton, EmptyState
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Design Tokens
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The design uses a warm, paper-like palette with three accent variants:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Terracotta** (default) — `oklch(0.62 0.13 38)`
+- **Sage** — `oklch(0.55 0.09 150)`
+- **Plum** — `oklch(0.48 0.12 340)`
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Typography uses Fraunces (a variable serif with `opsz` and `SOFT` axes) for display text, Inter for UI, and JetBrains Mono for metadata and labels.
