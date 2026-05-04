@@ -42,3 +42,8 @@ next-env.d.ts
 
 # app data (persisted store — not source)
 /.data/
+
+# local Claude Code settings
+.claude/settings.local.json
+/kitchen-notebook.iml
+.idea
