@@ -44,6 +44,7 @@ next-env.d.ts
 /.data/
 
 # local Claude Code settings
-.claude/settings.local.json
+.claude
+
 /kitchen-notebook.iml
 .idea
