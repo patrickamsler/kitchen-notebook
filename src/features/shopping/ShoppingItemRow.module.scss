@@ -1,0 +1,90 @@
+.row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto 32px;
+  gap: 14px;
+  align-items: baseline;
+  padding: 14px 4px;
+  border-bottom: 1px dotted var(--color-hair-strong);
+  transition: opacity var(--transition-fast);
+
+  &:hover .removeBtn { opacity: 1; }
+}
+
+.rowChecked {
+  opacity: 0.7;
+}
+
+.checkBox {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--color-hair-strong);
+  border-radius: 4px;
+  background: var(--color-bg-elev);
+  transition: all var(--transition-fast);
+  align-self: center;
+  flex: 0 0 18px;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover { border-color: var(--color-ink); }
+
+  svg { color: #fff; }
+}
+
+.checkBoxChecked {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.name {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 350;
+  font-variation-settings: 'opsz' 14;
+  color: var(--color-ink);
+  text-decoration: none;
+  text-decoration-color: var(--color-hair-strong);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.nameChecked {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.amount {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--color-accent-ink);
+  white-space: nowrap;
+  text-decoration: none;
+  text-decoration-color: var(--color-hair-strong);
+  transition: color var(--transition-fast);
+}
+
+.amountChecked {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.removeBtn {
+  opacity: 0;
+  width: 28px;
+  height: 28px;
+  align-self: center;
+  transition: opacity var(--transition-fast),
+              background var(--transition-fast),
+              color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-bg-sunk);
+    color: var(--color-danger);
+  }
+
+  @media (max-width: 720px) { opacity: 1; }
+}
