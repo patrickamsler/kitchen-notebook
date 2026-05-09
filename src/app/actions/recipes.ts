@@ -3,16 +3,15 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createRecipe, updateRecipe, deleteRecipe } from '@/data/store';
-import { uid } from '@/lib/uid';
-import type { Recipe, RecipeType, Ingredient, Step } from '@/lib/types';
+import type { RecipeType, Ingredient, Step } from '@/lib/types';
 
-function parseRecipeForm(formData: FormData, existingId?: string, existingCreatedAt?: string): Recipe {
+function parseRecipeForm(formData: FormData) {
   const title = (formData.get('title') as string | null)?.trim() ?? '';
   const description = (formData.get('description') as string | null)?.trim() ?? '';
   const notes = (formData.get('notes') as string | null)?.trim() ?? '';
   const types = formData.getAll('types') as RecipeType[];
 
-  const ingredientIds = formData.getAll('ingredient_id') as string[];
+  const ingredientIds = formData.getAll('ingredient_id').map(v => parseInt(v as string, 10));
   const ingredientAmounts = formData.getAll('ingredient_amount') as string[];
   const ingredientNames = formData.getAll('ingredient_name') as string[];
 
@@ -24,7 +23,7 @@ function parseRecipeForm(formData: FormData, existingId?: string, existingCreate
     }))
     .filter(ing => ing.name.length > 0 || ing.amount.length > 0);
 
-  const stepIds = formData.getAll('step_id') as string[];
+  const stepIds = formData.getAll('step_id').map(v => parseInt(v as string, 10));
   const stepDescriptions = formData.getAll('step_description') as string[];
 
   const steps: Step[] = stepIds
@@ -35,36 +34,27 @@ function parseRecipeForm(formData: FormData, existingId?: string, existingCreate
     }))
     .filter(s => s.description.length > 0);
 
-  return {
-    id: existingId ?? uid(),
-    title,
-    types,
-    description,
-    ingredients,
-    steps,
-    notes,
-    createdAt: existingCreatedAt ?? new Date().toISOString(),
-  };
+  return { title, description, notes, types, ingredients, steps };
 }
 
 export async function createRecipeAction(formData: FormData) {
-  const recipe = parseRecipeForm(formData);
-  if (!recipe.title) return;
-  await createRecipe(recipe);
+  const data = parseRecipeForm(formData);
+  if (!data.title) return;
+  const uid = await createRecipe(data);
   revalidatePath('/');
-  redirect(`/recipes/${recipe.id}`);
+  redirect(`/recipes/${uid}`);
 }
 
-export async function updateRecipeAction(id: string, createdAt: string, formData: FormData) {
-  const recipe = parseRecipeForm(formData, id, createdAt);
-  if (!recipe.title) return;
-  await updateRecipe(recipe);
+export async function updateRecipeAction(id: number, uid: string, formData: FormData) {
+  const data = parseRecipeForm(formData);
+  if (!data.title) return;
+  await updateRecipe(id, data);
   revalidatePath('/');
-  revalidatePath(`/recipes/${id}`);
-  redirect(`/recipes/${id}`);
+  revalidatePath(`/recipes/${uid}`);
+  redirect(`/recipes/${uid}`);
 }
 
-export async function deleteRecipeAction(id: string) {
+export async function deleteRecipeAction(id: number) {
   await deleteRecipe(id);
   revalidatePath('/');
   redirect('/');

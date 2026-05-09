@@ -9,43 +9,46 @@ import {
   clearCheckedShopping,
   clearAllShopping,
 } from '@/data/store';
-import type { ShoppingItem } from '@/lib/types';
-import { uid } from '@/lib/uid';
 
 export async function addShoppingItemsAction(
-  recipeId: string,
+  recipeId: number,
+  recipeUid: string,
   recipeTitle: string,
-  ingredients: Array<{ id: string; name: string; amount: string }>
+  ingredients: Array<{ id: number; name: string; amount: string }>
 ) {
-  const items: ShoppingItem[] = ingredients.map(ing => ({
-    id: uid(),
-    recipeId,
-    recipeTitle,
-    ingredientId: ing.id,
-    name: ing.name,
-    amount: ing.amount,
-    checked: false,
-    addedAt: new Date().toISOString(),
-  }));
-  await addShoppingItems(items);
+  await addShoppingItems(
+    ingredients.map(ing => ({
+      recipeId,
+      recipeUid,
+      recipeTitle,
+      ingredientId: ing.id,
+      name: ing.name,
+      amount: ing.amount,
+      checked: false,
+    }))
+  );
   revalidatePath('/shopping');
-  revalidatePath(`/recipes/${recipeId}`);
+  revalidatePath(`/recipes/${recipeUid}`);
   revalidatePath('/');
 }
 
-export async function removeShoppingByIngredientAction(recipeId: string, ingredientId: string) {
+export async function removeShoppingByIngredientAction(
+  recipeId: number,
+  recipeUid: string,
+  ingredientId: number
+) {
   await removeShoppingByIngredient(recipeId, ingredientId);
   revalidatePath('/shopping');
-  revalidatePath(`/recipes/${recipeId}`);
+  revalidatePath(`/recipes/${recipeUid}`);
   revalidatePath('/');
 }
 
-export async function toggleShoppingItemAction(itemId: string) {
+export async function toggleShoppingItemAction(itemId: number) {
   await toggleShoppingItem(itemId);
   revalidatePath('/shopping');
 }
 
-export async function removeShoppingItemAction(itemId: string) {
+export async function removeShoppingItemAction(itemId: number) {
   await removeShoppingItem(itemId);
   revalidatePath('/shopping');
   revalidatePath('/');

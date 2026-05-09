@@ -8,7 +8,7 @@ interface Props {
 export default async function RecipeDetailPage({ params }: Props) {
   const { id } = await params;
   const [recipe, shopping] = await Promise.all([getRecipe(id), getShopping()]);
-  const shoppingItems = shopping.filter(s => s.recipeId === id);
+  const shoppingItems = shopping.filter(s => s.recipeId === recipe.id);
 
   return (
     <RecipeDetailClient

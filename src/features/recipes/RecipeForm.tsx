@@ -7,13 +7,16 @@ import type { Recipe, RecipeType } from '@/lib/types';
 import { RECIPE_TYPES } from './constants';
 import { IconArrowLeft, IconPlus, IconX, IconUp, IconDown } from '@/components/icons/Icon';
 import { Button, IconButton } from '@/components/ui/Button';
-import { uid } from '@/lib/uid';
 import { createRecipeAction, updateRecipeAction } from '@/app/actions/recipes';
 
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(' ');
 
-interface IngItem { id: string; amount: string; name: string; }
-interface StepItem { id: string; order: number; description: string; }
+// Negative IDs are temporary client-only keys for new rows not yet saved to DB
+let _tempId = 0;
+const nextTempId = () => --_tempId;
+
+interface IngItem { id: number; amount: string; name: string; }
+interface StepItem { id: number; order: number; description: string; }
 
 interface Props {
   initial: Recipe | null;
@@ -27,10 +30,10 @@ export default function RecipeForm({ initial }: Props) {
   });
   const [description, setDescription] = useState(initial?.description ?? '');
   const [ingredients, setIngredients] = useState<IngItem[]>(
-    initial?.ingredients?.length ? initial.ingredients : [{ id: uid(), amount: '', name: '' }]
+    initial?.ingredients?.length ? initial.ingredients : [{ id: nextTempId(), amount: '', name: '' }]
   );
   const [steps, setSteps] = useState<StepItem[]>(
-    initial?.steps?.length ? initial.steps : [{ id: uid(), order: 1, description: '' }]
+    initial?.steps?.length ? initial.steps : [{ id: nextTempId(), order: 1, description: '' }]
   );
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [pending, startTransition] = useTransition();
@@ -40,21 +43,21 @@ export default function RecipeForm({ initial }: Props) {
     if (!initial && titleRef.current) titleRef.current.focus();
   }, []);
 
-  const updateIng = (id: string, field: keyof IngItem, value: string) => {
+  const updateIng = (id: number, field: keyof IngItem, value: string) => {
     setIngredients(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i));
   };
-  const addIng = () => setIngredients(prev => [...prev, { id: uid(), amount: '', name: '' }]);
-  const removeIng = (id: string) => setIngredients(prev => prev.length > 1 ? prev.filter(i => i.id !== id) : prev);
+  const addIng = () => setIngredients(prev => [...prev, { id: nextTempId(), amount: '', name: '' }]);
+  const removeIng = (id: number) => setIngredients(prev => prev.length > 1 ? prev.filter(i => i.id !== id) : prev);
 
-  const updateStep = (id: string, value: string) => {
+  const updateStep = (id: number, value: string) => {
     setSteps(prev => prev.map(s => s.id === id ? { ...s, description: value } : s));
   };
-  const addStep = () => setSteps(prev => [...prev, { id: uid(), order: prev.length + 1, description: '' }]);
-  const removeStep = (id: string) => setSteps(prev => {
+  const addStep = () => setSteps(prev => [...prev, { id: nextTempId(), order: prev.length + 1, description: '' }]);
+  const removeStep = (id: number) => setSteps(prev => {
     if (prev.length <= 1) return prev;
     return prev.filter(s => s.id !== id).map((s, i) => ({ ...s, order: i + 1 }));
   });
-  const moveStep = (id: string, dir: number) => {
+  const moveStep = (id: number, dir: number) => {
     setSteps(prev => {
       const idx = prev.findIndex(s => s.id === id);
       const target = idx + dir;
@@ -80,25 +83,26 @@ export default function RecipeForm({ initial }: Props) {
     formData.delete('step_description');
 
     for (const ing of ingredients) {
-      formData.append('ingredient_id', ing.id);
+      // Negative IDs are temp client keys — send 0 to signal "new row" to the server
+      formData.append('ingredient_id', ing.id > 0 ? String(ing.id) : '0');
       formData.append('ingredient_amount', ing.amount);
       formData.append('ingredient_name', ing.name);
     }
     for (const step of steps) {
-      formData.append('step_id', step.id);
+      formData.append('step_id', step.id > 0 ? String(step.id) : '0');
       formData.append('step_description', step.description);
     }
 
     startTransition(() => {
       if (initial) {
-        updateRecipeAction(initial.id, initial.createdAt, formData);
+        updateRecipeAction(initial.id, initial.uid, formData);
       } else {
         createRecipeAction(formData);
       }
     });
   };
 
-  const backHref = initial ? `/recipes/${initial.id}` : '/';
+  const backHref = initial ? `/recipes/${initial.uid}` : '/';
 
   return (
     <div className={styles.form}>

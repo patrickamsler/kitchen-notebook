@@ -35,8 +35,8 @@ interface Props {
 
 export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
   const [confirming, setConfirming] = useState(false);
-  const [checkedIngs, setCheckedIngs] = useState<Set<string>>(new Set());
-  const [doneSteps, setDoneSteps] = useState<Set<string>>(new Set());
+  const [checkedIngs, setCheckedIngs] = useState<Set<number>>(new Set());
+  const [doneSteps, setDoneSteps] = useState<Set<number>>(new Set());
   const [flash, setFlash] = useState<{ kind: 'add' | 'remove' } | null>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, startTransition] = useTransition();
@@ -47,7 +47,7 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
     shoppingItems.map(it => `${it.recipeId}::${it.ingredientId}`)
   );
 
-  const toggleIngChecked = (id: string) => {
+  const toggleIngChecked = (id: number) => {
     setCheckedIngs(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -55,7 +55,7 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
     });
   };
 
-  const toggleStep = (id: string) => {
+  const toggleStep = (id: number) => {
     setDoneSteps(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -63,14 +63,14 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
     });
   };
 
-  const toggleShopping = (ing: { id: string; name: string; amount: string }) => {
+  const toggleShopping = (ing: { id: number; name: string; amount: string }) => {
     const onList = onListKeys.has(`${recipe.id}::${ing.id}`);
     startTransition(() => {
       if (onList) {
-        removeShoppingByIngredientAction(recipe.id, ing.id);
+        removeShoppingByIngredientAction(recipe.id, recipe.uid, ing.id);
         setFlash({ kind: 'remove' });
       } else {
-        addShoppingItemsAction(recipe.id, recipe.title, [ing]);
+        addShoppingItemsAction(recipe.id, recipe.uid, recipe.title, [ing]);
         setFlash({ kind: 'add' });
       }
     });
@@ -104,7 +104,7 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
               <Button $variant="ghost" onClick={() => setConfirming(true)}>
                 <IconTrash /> Delete
               </Button>
-              <Link href={`/recipes/${recipe.id}/edit`} style={{ textDecoration: 'none' }}>
+              <Link href={`/recipes/${recipe.uid}/edit`} style={{ textDecoration: 'none' }}>
                 <Button><IconEdit /> Edit</Button>
               </Link>
             </>
