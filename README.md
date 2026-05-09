@@ -13,7 +13,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 The app is seeded with five example recipes on first run. Data persists across restarts via `.data/store.json`.
 
-## Supabase Setup (`.env.local`)
+### Supabase Setup
 
 This app connects to Supabase from `src/lib/supabase/server.ts` and expects these env vars:
 
@@ -28,13 +28,6 @@ NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 EOF
 ```
-
-Where to get the values in Supabase:
-
-- URL: **Project Settings -> API -> Project URL**
-- Anon key: **Project Settings -> API -> Project API keys -> anon public**
-
-After saving `.env.local`, restart the dev server:
 
 ```bash
 npm run dev
