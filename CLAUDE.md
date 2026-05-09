@@ -27,11 +27,13 @@ After every mutation, Server Actions call `revalidatePath()` to invalidate the N
 
 ### Styling
 
-All styles use **styled-components** with a typed theme (`src/theme/styled.d.ts` augments `DefaultTheme`). Theme tokens live in `src/theme/theme.ts` — `buildTheme(accent, fontVars)` is called inside `ThemedApp` (a client component) so the theme updates live when the user changes accent in the Settings menu.
+All styles use **CSS Modules (SCSS)**. Each component has a co-located `.module.scss` file; classes are imported as a JS object and applied via `className`.
 
-**Critical rule:** styled-components components that use `theme.*` must be in client components (`'use client'`). Server Components cannot access React Context, so theme-dependent styled-components will throw if placed in a Server Component. The pattern used here is: Server Component fetches data → passes props to a `*Shell` or `*Client` client component that does the styled-components rendering (see `Masthead.tsx` → `MastheadShell.tsx`).
+Global design tokens are CSS custom properties defined in `src/app/globals.scss` (colors, fonts, radii, shadows, transitions). Layout/breakpoint constants live in `src/styles/_tokens.scss`; media-query mixins (`up`, `down`) live in `src/styles/_mq.scss`.
 
-The SSR style injection uses `src/providers/StyledComponentsRegistry.tsx` (the standard Next.js pattern). This must remain the outermost wrapper in `Providers.tsx`.
+The three accent variants (`terracotta`, `sage`, `plum`) are defined in `globals.scss` as `[data-accent="…"]` selectors. Component styles reference them via `var(--color-accent)` etc.
+
+`src/theme/theme.ts` still defines `accentTokens` and `buildTheme()` (used for type definitions), but styling at runtime is driven entirely by CSS custom properties — no JS theme object flows through React context.
 
 ### Client vs Server split
 
@@ -53,4 +55,8 @@ Search, filter, and sort on the recipe list are stored in URL search params (`?q
 
 ### Theme / accent switching
 
-`TweaksProvider` holds `{ accent, titleScale }` in `useState`, hydrated from `localStorage` after mount. `ThemedApp` reads from this context and calls `buildTheme(accent, fontVars)` to rebuild the theme object on every accent change, which flows through `ThemeProvider` to all styled-components. The three accent variants (`terracotta`, `sage`, `plum`) are defined in `src/theme/theme.ts` as `accentTokens`.
+`TweaksProvider` holds `{ accent, titleScale }` in `useState`, hydrated from `localStorage` after mount. On change it:
+- sets `data-accent` attribute on `<html>` → activates the matching CSS custom property block in `globals.scss`
+- sets `--title-scale` CSS variable on `document.documentElement`
+
+No JS theme object or `ThemeProvider` is involved — all theming is CSS-native. The three accent variants (`terracotta`, `sage`, `plum`) are defined in `src/theme/theme.ts` as `accentTokens` (used for typing), and mirrored as `[data-accent]` selectors in `globals.scss`.
