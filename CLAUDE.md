@@ -52,11 +52,3 @@ The three accent variants (`terracotta`, `sage`, `plum`) are defined in `globals
 ### URL-driven state
 
 Search, filter, and sort on the recipe list are stored in URL search params (`?q=`, `?type=`, `?sort=`). The server page reads them and passes pre-filtered data down — no client-side filtering. `FilterBar` and `SearchBar` update the URL via `router.replace()`.
-
-### Theme / accent switching
-
-`TweaksProvider` holds `{ accent, titleScale }` in `useState`, hydrated from `localStorage` after mount. On change it:
-- sets `data-accent` attribute on `<html>` → activates the matching CSS custom property block in `globals.scss`
-- sets `--title-scale` CSS variable on `document.documentElement`
-
-No JS theme object or `ThemeProvider` is involved — all theming is CSS-native. The three accent variants (`terracotta`, `sage`, `plum`) are defined in `src/theme/theme.ts` as `accentTokens` (used for typing), and mirrored as `[data-accent]` selectors in `globals.scss`.
