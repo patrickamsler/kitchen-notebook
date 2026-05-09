@@ -1,6 +1,8 @@
 -- Kitchen Notebook seed data
 -- Run this in the Supabase SQL Editor after schema.sql
 
+set search_path = app;
+
 -- Late-Summer Panzanella
 with
   r as (
