@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import styles from './MastheadShell.module.scss';
 import ShoppingPill from '@/features/shopping/ShoppingPill';
-import SettingsMenu from './SettingsMenu';
 
 interface Props {
   pendingCount: number;
@@ -27,7 +26,6 @@ export default function MastheadShell({ pendingCount, totalCount, lastDate }: Pr
         <span>
           {totalCount} {totalCount === 1 ? 'recipe' : 'recipes'} · Last edit {lastDate}
         </span>
-        <SettingsMenu />
       </div>
     </header>
   );

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
-import { Providers } from '@/providers/Providers';
 import Masthead from '@/features/masthead/Masthead';
 import './globals.scss';
 
@@ -30,14 +29,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" data-accent="plum" className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
-        <Providers>
-          <div className="appShell">
-            <Masthead />
-            {children}
-          </div>
-        </Providers>
+        <div className="appShell">
+          <Masthead />
+          {children}
+        </div>
       </body>
     </html>
   );
