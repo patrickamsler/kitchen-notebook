@@ -2,60 +2,43 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { z } from 'zod';
 import { createRecipe, updateRecipe, deleteRecipe } from '@/data/store';
-import type { RecipeType, Ingredient, Step } from '@/lib/types';
+import { actionClient } from '@/lib/safe-action';
 
-function parseRecipeForm(formData: FormData) {
-  const title = (formData.get('title') as string | null)?.trim() ?? '';
-  const description = (formData.get('description') as string | null)?.trim() ?? '';
-  const notes = (formData.get('notes') as string | null)?.trim() ?? '';
-  const types = formData.getAll('types') as RecipeType[];
+const recipeFormSchema = z.object({
+  title: z.string().min(1),
+  description: z.string(),
+  notes: z.string(),
+  types: z.array(z.enum(['starter', 'main', 'dessert', 'italian', 'asian'])),
+  ingredients: z.array(z.object({ id: z.number(), amount: z.string(), name: z.string() })),
+  steps: z.array(z.object({ id: z.number(), order: z.number(), description: z.string() })),
+});
 
-  const ingredientIds = formData.getAll('ingredient_id').map(v => parseInt(v as string, 10));
-  const ingredientAmounts = formData.getAll('ingredient_amount') as string[];
-  const ingredientNames = formData.getAll('ingredient_name') as string[];
+const updateRecipeSchema = recipeFormSchema.extend({ id: z.number(), uid: z.string() });
+const deleteRecipeSchema = z.object({ id: z.number() });
 
-  const ingredients: Ingredient[] = ingredientIds
-    .map((id, i) => ({
-      id,
-      amount: (ingredientAmounts[i] ?? '').trim(),
-      name: (ingredientNames[i] ?? '').trim(),
-    }))
-    .filter(ing => ing.name.length > 0 || ing.amount.length > 0);
+export const createRecipeAction = actionClient
+  .inputSchema(recipeFormSchema)
+  .action(async ({ parsedInput }) => {
+    const uid = await createRecipe(parsedInput);
+    revalidatePath('/');
+    redirect(`/recipes/${uid}`);
+  });
 
-  const stepIds = formData.getAll('step_id').map(v => parseInt(v as string, 10));
-  const stepDescriptions = formData.getAll('step_description') as string[];
+export const updateRecipeAction = actionClient
+  .inputSchema(updateRecipeSchema)
+  .action(async ({ parsedInput: { id, uid, ...data } }) => {
+    await updateRecipe(id, data);
+    revalidatePath('/');
+    revalidatePath(`/recipes/${uid}`);
+    redirect(`/recipes/${uid}`);
+  });
 
-  const steps: Step[] = stepIds
-    .map((id, i) => ({
-      id,
-      order: i + 1,
-      description: (stepDescriptions[i] ?? '').trim(),
-    }))
-    .filter(s => s.description.length > 0);
-
-  return { title, description, notes, types, ingredients, steps };
-}
-
-export async function createRecipeAction(formData: FormData) {
-  const data = parseRecipeForm(formData);
-  if (!data.title) return;
-  const uid = await createRecipe(data);
-  revalidatePath('/');
-  redirect(`/recipes/${uid}`);
-}
-
-export async function updateRecipeAction(id: number, uid: string, formData: FormData) {
-  const data = parseRecipeForm(formData);
-  if (!data.title) return;
-  await updateRecipe(id, data);
-  revalidatePath('/');
-  revalidatePath(`/recipes/${uid}`);
-  redirect(`/recipes/${uid}`);
-}
-
-export async function deleteRecipeAction(id: number) {
-  await deleteRecipe(id);
-  revalidatePath('/');
-  redirect('/');
-}
+export const deleteRecipeAction = actionClient
+  .inputSchema(deleteRecipeSchema)
+  .action(async ({ parsedInput: { id } }) => {
+    await deleteRecipe(id);
+    revalidatePath('/');
+    redirect('/');
+  });

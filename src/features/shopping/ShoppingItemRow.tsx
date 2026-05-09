@@ -16,13 +16,13 @@ export default function ShoppingItemRow({ item }: { item: ShoppingItem }) {
   const handleToggle = () => {
     startTransition(() => {
       setOptimisticChecked(!optimisticChecked);
-      toggleShoppingItemAction(item.id);
+      toggleShoppingItemAction({ id: item.id });
     });
   };
 
   const handleRemove = () => {
     startTransition(() => {
-      removeShoppingItemAction(item.id);
+      removeShoppingItemAction({ id: item.id });
     });
   };
 

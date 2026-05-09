@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import {
   addShoppingItems,
   toggleShoppingItem,
@@ -9,59 +10,76 @@ import {
   clearCheckedShopping,
   clearAllShopping,
 } from '@/data/store';
+import { actionClient } from '@/lib/safe-action';
 
-export async function addShoppingItemsAction(
-  recipeId: number,
-  recipeUid: string,
-  recipeTitle: string,
-  ingredients: Array<{ id: number; name: string; amount: string }>
-) {
-  await addShoppingItems(
-    ingredients.map(ing => ({
-      recipeId,
-      recipeUid,
-      recipeTitle,
-      ingredientId: ing.id,
-      name: ing.name,
-      amount: ing.amount,
-      checked: false,
-    }))
-  );
-  revalidatePath('/shopping');
-  revalidatePath(`/recipes/${recipeUid}`);
-  revalidatePath('/');
-}
+const addItemsSchema = z.object({
+  recipeId: z.number(),
+  recipeUid: z.string(),
+  recipeTitle: z.string(),
+  ingredients: z.array(z.object({ id: z.number(), name: z.string(), amount: z.string() })),
+});
 
-export async function removeShoppingByIngredientAction(
-  recipeId: number,
-  recipeUid: string,
-  ingredientId: number
-) {
-  await removeShoppingByIngredient(recipeId, ingredientId);
-  revalidatePath('/shopping');
-  revalidatePath(`/recipes/${recipeUid}`);
-  revalidatePath('/');
-}
+const removeByIngSchema = z.object({
+  recipeId: z.number(),
+  recipeUid: z.string(),
+  ingredientId: z.number(),
+});
 
-export async function toggleShoppingItemAction(itemId: number) {
-  await toggleShoppingItem(itemId);
-  revalidatePath('/shopping');
-}
+const itemIdSchema = z.object({ id: z.number() });
 
-export async function removeShoppingItemAction(itemId: number) {
-  await removeShoppingItem(itemId);
-  revalidatePath('/shopping');
-  revalidatePath('/');
-}
+export const addShoppingItemsAction = actionClient
+  .inputSchema(addItemsSchema)
+  .action(async ({ parsedInput: { recipeId, recipeUid, recipeTitle, ingredients } }) => {
+    await addShoppingItems(
+      ingredients.map(ing => ({
+        recipeId,
+        recipeUid,
+        recipeTitle,
+        ingredientId: ing.id,
+        name: ing.name,
+        amount: ing.amount,
+        checked: false,
+      }))
+    );
+    revalidatePath('/shopping');
+    revalidatePath(`/recipes/${recipeUid}`);
+    revalidatePath('/');
+  });
 
-export async function clearCheckedShoppingAction() {
-  await clearCheckedShopping();
-  revalidatePath('/shopping');
-  revalidatePath('/');
-}
+export const removeShoppingByIngredientAction = actionClient
+  .inputSchema(removeByIngSchema)
+  .action(async ({ parsedInput: { recipeId, recipeUid, ingredientId } }) => {
+    await removeShoppingByIngredient(recipeId, ingredientId);
+    revalidatePath('/shopping');
+    revalidatePath(`/recipes/${recipeUid}`);
+    revalidatePath('/');
+  });
 
-export async function clearAllShoppingAction() {
-  await clearAllShopping();
-  revalidatePath('/shopping');
-  revalidatePath('/');
-}
+export const toggleShoppingItemAction = actionClient
+  .inputSchema(itemIdSchema)
+  .action(async ({ parsedInput: { id } }) => {
+    await toggleShoppingItem(id);
+    revalidatePath('/shopping');
+  });
+
+export const removeShoppingItemAction = actionClient
+  .inputSchema(itemIdSchema)
+  .action(async ({ parsedInput: { id } }) => {
+    await removeShoppingItem(id);
+    revalidatePath('/shopping');
+    revalidatePath('/');
+  });
+
+export const clearCheckedShoppingAction = actionClient
+  .action(async () => {
+    await clearCheckedShopping();
+    revalidatePath('/shopping');
+    revalidatePath('/');
+  });
+
+export const clearAllShoppingAction = actionClient
+  .action(async () => {
+    await clearAllShopping();
+    revalidatePath('/shopping');
+    revalidatePath('/');
+  });

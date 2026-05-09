@@ -67,10 +67,10 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
     const onList = onListKeys.has(`${recipe.id}::${ing.id}`);
     startTransition(() => {
       if (onList) {
-        removeShoppingByIngredientAction(recipe.id, recipe.uid, ing.id);
+        removeShoppingByIngredientAction({ recipeId: recipe.id, recipeUid: recipe.uid, ingredientId: ing.id });
         setFlash({ kind: 'remove' });
       } else {
-        addShoppingItemsAction(recipe.id, recipe.uid, recipe.title, [ing]);
+        addShoppingItemsAction({ recipeId: recipe.id, recipeUid: recipe.uid, recipeTitle: recipe.title, ingredients: [ing] });
         setFlash({ kind: 'add' });
       }
     });
@@ -79,7 +79,7 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
   };
 
   const handleDelete = () => {
-    startTransition(() => { deleteRecipeAction(recipe.id); });
+    startTransition(() => { deleteRecipeAction({ id: recipe.id }); });
   };
 
   const created = new Date(recipe.createdAt);

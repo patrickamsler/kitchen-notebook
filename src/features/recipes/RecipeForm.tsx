@@ -73,31 +73,25 @@ export default function RecipeForm({ initial }: Props) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!canSave) return;
-    const form = e.currentTarget;
-    const formData = new FormData(form);
 
-    formData.delete('ingredient_id');
-    formData.delete('ingredient_amount');
-    formData.delete('ingredient_name');
-    formData.delete('step_id');
-    formData.delete('step_description');
-
-    for (const ing of ingredients) {
-      // Negative IDs are temp client keys — send 0 to signal "new row" to the server
-      formData.append('ingredient_id', ing.id > 0 ? String(ing.id) : '0');
-      formData.append('ingredient_amount', ing.amount);
-      formData.append('ingredient_name', ing.name);
-    }
-    for (const step of steps) {
-      formData.append('step_id', step.id > 0 ? String(step.id) : '0');
-      formData.append('step_description', step.description);
-    }
+    const payload = {
+      title,
+      description,
+      notes,
+      types: Array.from(types),
+      ingredients: ingredients
+        .filter(ing => ing.name.length > 0 || ing.amount.length > 0)
+        .map(ing => ({ ...ing, id: ing.id > 0 ? ing.id : 0 })),
+      steps: steps
+        .filter(s => s.description.length > 0)
+        .map((s, i) => ({ id: s.id > 0 ? s.id : 0, order: i + 1, description: s.description })),
+    };
 
     startTransition(() => {
       if (initial) {
-        updateRecipeAction(initial.id, initial.uid, formData);
+        updateRecipeAction({ ...payload, id: initial.id, uid: initial.uid });
       } else {
-        createRecipeAction(formData);
+        createRecipeAction(payload);
       }
     });
   };
@@ -118,13 +112,6 @@ export default function RecipeForm({ initial }: Props) {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <input type="hidden" name="title" value={title} />
-        <input type="hidden" name="description" value={description} />
-        <input type="hidden" name="notes" value={notes} />
-        {Array.from(types).map(t => (
-          <input key={t} type="hidden" name="types" value={t} />
-        ))}
-
         <div className={styles.field}>
           <label className={styles.fieldLabel} htmlFor="title-input">Title</label>
           <input
