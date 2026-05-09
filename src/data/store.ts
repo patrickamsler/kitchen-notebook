@@ -1,134 +1,258 @@
 import 'server-only';
-import fs from 'fs';
-import path from 'path';
-import type { Recipe, ShoppingItem } from '@/lib/types';
-import { SEED_RECIPES } from '@/lib/seed';
+import { createClient } from '@/lib/supabase/server';
+import type { Recipe, RecipeType, Ingredient, Step, ShoppingItem } from '@/lib/types';
 
-const DATA_FILE = path.join(process.cwd(), '.data', 'store.json');
+type RecipeUpdate = {
+  title: string;
+  description: string;
+  notes: string;
+  types: RecipeType[];
+  ingredients: Ingredient[];
+  steps: Step[];
+};
 
-interface StoreData {
-  recipes: Recipe[];
-  shopping: ShoppingItem[];
+type ShoppingInsert = Omit<ShoppingItem, 'id' | 'addedAt'>;
+
+function mapRecipe(row: Record<string, unknown>): Recipe {
+  const types = (row.recipe_types as { type_id: string }[]).map(rt => rt.type_id as RecipeType);
+  const ingredients = (row.ingredients as { id: number; amount: string; name: string }[]);
+  const steps = (row.steps as { id: number; order: number; description: string }[]);
+  return {
+    id: row.id as number,
+    uid: row.uid as string,
+    title: row.title as string,
+    description: row.description as string,
+    notes: row.notes as string,
+    createdAt: row.created_at as string,
+    types,
+    ingredients,
+    steps: [...steps].sort((a, b) => a.order - b.order),
+  };
 }
 
-let _store: StoreData | null = null;
-
-function readFromDisk(): StoreData {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-      return JSON.parse(raw) as StoreData;
-    }
-  } catch {}
-  return { recipes: SEED_RECIPES, shopping: [] };
-}
-
-function writeToDisk(data: StoreData) {
-  try {
-    const dir = path.dirname(DATA_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-  } catch {}
-}
-
-function getStore(): StoreData {
-  if (!_store) {
-    _store = readFromDisk();
-  }
-  return _store;
-}
-
-function saveStore() {
-  if (_store) writeToDisk(_store);
-}
-
-const delay = () => new Promise<void>(r => setTimeout(r, 120));
+const RECIPE_SELECT = `
+  id, uid, title, description, notes, created_at,
+  recipe_types ( type_id ),
+  ingredients ( id, amount, name ),
+  steps ( id, order, description )
+`;
 
 export async function getRecipes(): Promise<Recipe[]> {
-  await delay();
-  return [...getStore().recipes];
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('recipes')
+    .select(RECIPE_SELECT)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data as Record<string, unknown>[]).map(mapRecipe);
 }
 
-export async function getRecipe(id: string): Promise<Recipe> {
-  await delay();
-  const recipe = getStore().recipes.find(r => r.id === id);
-  if (!recipe) throw new Error('Recipe not found');
-  return { ...recipe };
+export async function getRecipe(uid: string): Promise<Recipe> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('recipes')
+    .select(RECIPE_SELECT)
+    .eq('uid', uid)
+    .single();
+  if (error) throw new Error('Recipe not found');
+  return mapRecipe(data as Record<string, unknown>);
 }
 
-export async function createRecipe(recipe: Recipe): Promise<void> {
-  await delay();
-  const store = getStore();
-  store.recipes = [recipe, ...store.recipes];
-  saveStore();
+export async function createRecipe(data: Omit<RecipeUpdate, never>): Promise<string> {
+  const supabase = createClient();
+
+  const { data: row, error } = await supabase
+    .from('recipes')
+    .insert({ title: data.title, description: data.description, notes: data.notes })
+    .select('id, uid')
+    .single();
+  if (error) throw new Error(error.message);
+  const recipeId: number = (row as { id: number; uid: string }).id;
+  const recipeUid: string = (row as { id: number; uid: string }).uid;
+
+  if (data.types.length > 0) {
+    const { error: e } = await supabase
+      .from('recipe_types')
+      .insert(data.types.map(t => ({ recipe_id: recipeId, type_id: t })));
+    if (e) throw new Error(e.message);
+  }
+
+  if (data.ingredients.length > 0) {
+    const { error: e } = await supabase
+      .from('ingredients')
+      .insert(data.ingredients.map(i => ({ recipe_id: recipeId, amount: i.amount, name: i.name })));
+    if (e) throw new Error(e.message);
+  }
+
+  if (data.steps.length > 0) {
+    const { error: e } = await supabase
+      .from('steps')
+      .insert(data.steps.map(s => ({ recipe_id: recipeId, order: s.order, description: s.description })));
+    if (e) throw new Error(e.message);
+  }
+
+  return recipeUid;
 }
 
-export async function updateRecipe(recipe: Recipe): Promise<void> {
-  await delay();
-  const store = getStore();
-  const idx = store.recipes.findIndex(r => r.id === recipe.id);
-  if (idx < 0) throw new Error('Recipe not found');
-  store.recipes[idx] = recipe;
-  saveStore();
+export async function updateRecipe(id: number, data: RecipeUpdate): Promise<void> {
+  const supabase = createClient();
+
+  const { error: recipeErr } = await supabase
+    .from('recipes')
+    .update({ title: data.title, description: data.description, notes: data.notes })
+    .eq('id', id);
+  if (recipeErr) throw new Error(recipeErr.message);
+
+  // recipe_types: full replace (no other table references these)
+  await supabase.from('recipe_types').delete().eq('recipe_id', id);
+  if (data.types.length > 0) {
+    await supabase
+      .from('recipe_types')
+      .insert(data.types.map(t => ({ recipe_id: id, type_id: t })));
+  }
+
+  // Ingredients: diff to preserve IDs referenced by shopping_items
+  const { data: existingIngs } = await supabase
+    .from('ingredients')
+    .select('id')
+    .eq('recipe_id', id);
+  const existingIngIds = new Set((existingIngs ?? []).map((r: { id: number }) => r.id));
+  const submittedIngIds = new Set(data.ingredients.filter(i => i.id > 0).map(i => i.id));
+
+  const ingIdsToDelete = [...existingIngIds].filter(ingId => !submittedIngIds.has(ingId));
+  if (ingIdsToDelete.length > 0) {
+    await supabase.from('shopping_items').delete().in('ingredient_id', ingIdsToDelete);
+    await supabase.from('ingredients').delete().in('id', ingIdsToDelete);
+  }
+  for (const ing of data.ingredients.filter(i => i.id > 0)) {
+    await supabase.from('ingredients').update({ amount: ing.amount, name: ing.name }).eq('id', ing.id);
+  }
+  const newIngs = data.ingredients.filter(i => i.id === 0);
+  if (newIngs.length > 0) {
+    await supabase
+      .from('ingredients')
+      .insert(newIngs.map(i => ({ recipe_id: id, amount: i.amount, name: i.name })));
+  }
+
+  // Steps: same diff (no FK dependents)
+  const { data: existingSteps } = await supabase
+    .from('steps')
+    .select('id')
+    .eq('recipe_id', id);
+  const existingStepIds = new Set((existingSteps ?? []).map((r: { id: number }) => r.id));
+  const submittedStepIds = new Set(data.steps.filter(s => s.id > 0).map(s => s.id));
+
+  const stepIdsToDelete = [...existingStepIds].filter(sId => !submittedStepIds.has(sId));
+  if (stepIdsToDelete.length > 0) {
+    await supabase.from('steps').delete().in('id', stepIdsToDelete);
+  }
+  for (const step of data.steps.filter(s => s.id > 0)) {
+    await supabase
+      .from('steps')
+      .update({ order: step.order, description: step.description })
+      .eq('id', step.id);
+  }
+  const newSteps = data.steps.filter(s => s.id === 0);
+  if (newSteps.length > 0) {
+    await supabase
+      .from('steps')
+      .insert(newSteps.map(s => ({ recipe_id: id, order: s.order, description: s.description })));
+  }
 }
 
-export async function deleteRecipe(id: string): Promise<void> {
-  await delay();
-  const store = getStore();
-  store.recipes = store.recipes.filter(r => r.id !== id);
-  store.shopping = store.shopping.filter(s => s.recipeId !== id);
-  saveStore();
+export async function deleteRecipe(id: number): Promise<void> {
+  const supabase = createClient();
+  await supabase.from('shopping_items').delete().eq('recipe_id', id);
+  await supabase.from('steps').delete().eq('recipe_id', id);
+  await supabase.from('ingredients').delete().eq('recipe_id', id);
+  await supabase.from('recipe_types').delete().eq('recipe_id', id);
+  await supabase.from('recipes').delete().eq('id', id);
 }
 
 export async function getShopping(): Promise<ShoppingItem[]> {
-  await delay();
-  return [...getStore().shopping];
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('shopping_items')
+    .select('*')
+    .order('added_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data as Record<string, unknown>[]).map(row => ({
+    id: row.id as number,
+    recipeId: row.recipe_id as number,
+    recipeUid: row.recipe_uid as string,
+    recipeTitle: row.recipe_title as string,
+    ingredientId: row.ingredient_id as number,
+    name: row.name as string,
+    amount: row.amount as string,
+    checked: row.checked as boolean,
+    addedAt: row.added_at as string,
+  }));
 }
 
-export async function addShoppingItems(items: ShoppingItem[]): Promise<void> {
-  await delay();
-  const store = getStore();
-  const existingKeys = new Set(store.shopping.map(it => `${it.recipeId}::${it.ingredientId}`));
-  const fresh = items.filter(it => !existingKeys.has(`${it.recipeId}::${it.ingredientId}`));
-  store.shopping = [...store.shopping, ...fresh];
-  saveStore();
-}
+export async function addShoppingItems(items: ShoppingInsert[]): Promise<void> {
+  if (items.length === 0) return;
+  const supabase = createClient();
 
-export async function toggleShoppingItem(itemId: string): Promise<void> {
-  await delay();
-  const store = getStore();
-  store.shopping = store.shopping.map(it =>
-    it.id === itemId ? { ...it, checked: !it.checked } : it
+  const { data: existing } = await supabase
+    .from('shopping_items')
+    .select('recipe_id, ingredient_id')
+    .in('ingredient_id', items.map(i => i.ingredientId));
+
+  const existingKeys = new Set(
+    (existing ?? []).map((e: { recipe_id: number; ingredient_id: number }) =>
+      `${e.recipe_id}::${e.ingredient_id}`
+    )
   );
-  saveStore();
-}
 
-export async function removeShoppingItem(itemId: string): Promise<void> {
-  await delay();
-  const store = getStore();
-  store.shopping = store.shopping.filter(it => it.id !== itemId);
-  saveStore();
-}
+  const fresh = items.filter(i => !existingKeys.has(`${i.recipeId}::${i.ingredientId}`));
+  if (fresh.length === 0) return;
 
-export async function removeShoppingByIngredient(recipeId: string, ingredientId: string): Promise<void> {
-  await delay();
-  const store = getStore();
-  store.shopping = store.shopping.filter(
-    it => !(it.recipeId === recipeId && it.ingredientId === ingredientId)
+  await supabase.from('shopping_items').insert(
+    fresh.map(i => ({
+      recipe_id: i.recipeId,
+      recipe_uid: i.recipeUid,
+      recipe_title: i.recipeTitle,
+      ingredient_id: i.ingredientId,
+      name: i.name,
+      amount: i.amount,
+      checked: false,
+    }))
   );
-  saveStore();
+}
+
+export async function toggleShoppingItem(itemId: number): Promise<void> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from('shopping_items')
+    .select('checked')
+    .eq('id', itemId)
+    .single();
+  await supabase
+    .from('shopping_items')
+    .update({ checked: !(data as { checked: boolean }).checked })
+    .eq('id', itemId);
+}
+
+export async function removeShoppingItem(itemId: number): Promise<void> {
+  const supabase = createClient();
+  await supabase.from('shopping_items').delete().eq('id', itemId);
+}
+
+export async function removeShoppingByIngredient(recipeId: number, ingredientId: number): Promise<void> {
+  const supabase = createClient();
+  await supabase
+    .from('shopping_items')
+    .delete()
+    .eq('recipe_id', recipeId)
+    .eq('ingredient_id', ingredientId);
 }
 
 export async function clearCheckedShopping(): Promise<void> {
-  await delay();
-  const store = getStore();
-  store.shopping = store.shopping.filter(it => !it.checked);
-  saveStore();
+  const supabase = createClient();
+  await supabase.from('shopping_items').delete().eq('checked', true);
 }
 
 export async function clearAllShopping(): Promise<void> {
-  await delay();
-  const store = getStore();
-  store.shopping = [];
-  saveStore();
+  const supabase = createClient();
+  await supabase.from('shopping_items').delete().gt('id', 0);
 }

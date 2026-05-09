@@ -13,10 +13,10 @@ import { clearCheckedShoppingAction, clearAllShoppingAction } from '@/app/action
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(' ');
 
 interface Group {
-  recipeId: string;
+  recipeId: number;
+  recipeUid: string;
   title: string;
   items: ShoppingItem[];
-  hasRecipe: boolean;
 }
 
 interface Props {
@@ -30,7 +30,7 @@ export default function ShoppingList({ items }: Props) {
   const remaining = total - checked;
 
   const groups: Group[] = [];
-  const seen = new Map<string, ShoppingItem[]>();
+  const seen = new Map<number, ShoppingItem[]>();
   for (const item of items) {
     if (!seen.has(item.recipeId)) seen.set(item.recipeId, []);
     seen.get(item.recipeId)!.push(item);
@@ -38,9 +38,9 @@ export default function ShoppingList({ items }: Props) {
   for (const [recipeId, groupItems] of seen) {
     groups.push({
       recipeId,
+      recipeUid: groupItems[0].recipeUid,
       title: groupItems[0].recipeTitle || 'Removed recipe',
       items: groupItems,
-      hasRecipe: true,
     });
   }
 
@@ -110,7 +110,7 @@ export default function ShoppingList({ items }: Props) {
             <section key={group.recipeId}>
               <header className={styles.groupHead}>
                 <div className={styles.groupMeta}>From the recipe</div>
-                <Link href={`/recipes/${group.recipeId}`} className={styles.groupTitle}>
+                <Link href={`/recipes/${group.recipeUid}`} className={styles.groupTitle}>
                   {group.title} <IconArrowRight />
                 </Link>
                 <span className={styles.groupCount}>{group.items.length} {group.items.length === 1 ? 'item' : 'items'}</span>

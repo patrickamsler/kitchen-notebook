@@ -1,19 +1,20 @@
 export type RecipeType = 'starter' | 'main' | 'dessert' | 'italian' | 'asian';
 
 export interface Ingredient {
-  id: string;
+  id: number;
   amount: string;
   name: string;
 }
 
 export interface Step {
-  id: string;
+  id: number;
   order: number;
   description: string;
 }
 
 export interface Recipe {
-  id: string;
+  id: number;
+  uid: string;
   title: string;
   types: RecipeType[];
   description: string;
@@ -24,10 +25,11 @@ export interface Recipe {
 }
 
 export interface ShoppingItem {
-  id: string;
-  recipeId: string;
+  id: number;
+  recipeId: number;
+  recipeUid: string;
   recipeTitle: string;
-  ingredientId: string;
+  ingredientId: number;
   name: string;
   amount: string;
   checked: boolean;

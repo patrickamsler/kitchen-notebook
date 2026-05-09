@@ -19,7 +19,7 @@ export default function RecipeCard({ recipe, index }: Props) {
   const num = String(index + 1).padStart(2, '0');
 
   return (
-    <Link href={`/recipes/${recipe.id}`} className={styles.card}>
+    <Link href={`/recipes/${recipe.uid}`} className={styles.card}>
       <div className={styles.cardMeta}>
         <span>№ {num}</span>
         {recipe.types.length > 0 && (
