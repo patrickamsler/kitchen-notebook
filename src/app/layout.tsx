@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <body>
         <Providers>
-          <div style={{ position: 'relative', zIndex: 1, maxWidth: '1180px', margin: '0 auto', padding: '48px 40px 96px', minHeight: '100vh' }}>
+          <div className="appShell">
             <Masthead />
             {children}
           </div>

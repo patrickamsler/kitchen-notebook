@@ -1,0 +1,14 @@
+@use './tokens';
+
+@mixin down($key) {
+  @media (max-width: tokens.breakpoint($key)) {
+    @content;
+  }
+}
+
+@mixin up($key) {
+  @media (min-width: tokens.breakpoint($key)) {
+    @content;
+  }
+}
+

@@ -1,4 +1,5 @@
 import type { AccentVariant } from '@/lib/types';
+import { layoutTokens } from '@/theme/tokens';
 
 export const accentTokens = {
   terracotta: {
@@ -46,7 +47,7 @@ export function buildTheme(accent: AccentVariant = 'terracotta', fontVars?: { se
       md: '0 4px 18px -8px rgba(50, 35, 20, 0.10), 0 1px 2px rgba(50, 35, 20, 0.04)',
       lg: '0 18px 40px -20px rgba(50, 35, 20, 0.18), 0 2px 6px rgba(50, 35, 20, 0.05)',
     },
-    layout: { maxWidth: '1180px' },
+    layout: { maxWidth: layoutTokens.maxWidth },
     transitions: { fast: '160ms', med: '240ms' },
   } as const;
 }

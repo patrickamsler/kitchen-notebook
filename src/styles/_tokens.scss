@@ -1,0 +1,25 @@
+@use 'sass:map';
+
+$breakpoints: (
+  sm: 720px,
+  md: 920px,
+  lg: 1180px,
+);
+
+$layout: (
+  container-max: 1180px,
+  gutter-desktop: 40px,
+  gutter-mobile: 20px,
+  padding-top-desktop: 48px,
+  padding-top-mobile: 28px,
+  padding-bottom: 96px,
+);
+
+@function breakpoint($key) {
+  @return map.get($breakpoints, $key);
+}
+
+@function layout-size($key) {
+  @return map.get($layout, $key);
+}
+

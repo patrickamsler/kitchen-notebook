@@ -1,3 +1,6 @@
+@use '../styles/tokens';
+@use '../styles/mq';
+
 /* ─── Static tokens ─────────────────────────────────────── */
 :root {
   /* Colors */
@@ -70,6 +73,21 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: 'ss01', 'cv11';
+}
+
+.appShell {
+  position: relative;
+  z-index: 1;
+  max-width: tokens.layout-size(container-max);
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: tokens.layout-size(padding-top-desktop) tokens.layout-size(gutter-desktop) tokens.layout-size(padding-bottom);
+
+  @include mq.down(sm) {
+    padding-top: tokens.layout-size(padding-top-mobile);
+    padding-right: tokens.layout-size(gutter-mobile);
+    padding-left: tokens.layout-size(gutter-mobile);
+  }
 }
 
 button { font: inherit; cursor: pointer; }
