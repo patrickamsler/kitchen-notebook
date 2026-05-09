@@ -1,3 +1,5 @@
+@use '../../styles/mq';
+
 .card {
   display: flex;
   text-decoration: none;
@@ -94,7 +96,7 @@
   letter-spacing: 0.1em;
   color: var(--color-muted);
 
-  @media (max-width: 720px) {
+  @include mq.down(sm) {
     flex-wrap: wrap;
   }
 }
@@ -106,7 +108,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 
-  @media (max-width: 720px) {
+  @include mq.down(sm) {
     text-align: right;
     order: 3;
     width: 100%;

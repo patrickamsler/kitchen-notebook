@@ -1,3 +1,5 @@
+@use '../../styles/mq';
+
 .header {
   display: flex;
   align-items: flex-end;
@@ -7,7 +9,7 @@
   border-bottom: 1px solid var(--color-hair);
   margin-bottom: 40px;
 
-  @media (max-width: 720px) {
+  @include mq.down(sm) {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
@@ -44,7 +46,7 @@
     color: var(--color-accent-ink);
   }
 
-  @media (max-width: 720px) {
+  @include mq.down(sm) {
     font-size: 40px;
   }
 }
@@ -60,7 +62,7 @@
   align-items: flex-end;
   gap: 12px;
 
-  @media (max-width: 720px) {
+  @include mq.down(sm) {
     text-align: left;
     align-items: flex-start;
     flex-direction: row;
