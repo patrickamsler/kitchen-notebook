@@ -10,7 +10,7 @@ import {
   clearCheckedShopping,
   clearAllShopping,
 } from '@/data/mutations';
-import { actionClient } from '@/lib/safe-action';
+import { authActionClient } from '@/lib/safe-action';
 
 const addItemsSchema = z.object({
   recipeId: z.number(),
@@ -27,7 +27,7 @@ const removeByIngSchema = z.object({
 
 const itemIdSchema = z.object({ id: z.number() });
 
-export const addShoppingItemsAction = actionClient
+export const addShoppingItemsAction = authActionClient
   .inputSchema(addItemsSchema)
   .action(async ({ parsedInput: { recipeId, recipeUid, recipeTitle, ingredients } }) => {
     await addShoppingItems(
@@ -46,7 +46,7 @@ export const addShoppingItemsAction = actionClient
     revalidatePath('/');
   });
 
-export const removeShoppingByIngredientAction = actionClient
+export const removeShoppingByIngredientAction = authActionClient
   .inputSchema(removeByIngSchema)
   .action(async ({ parsedInput: { recipeId, recipeUid, ingredientId } }) => {
     await removeShoppingByIngredient(recipeId, ingredientId);
@@ -55,14 +55,14 @@ export const removeShoppingByIngredientAction = actionClient
     revalidatePath('/');
   });
 
-export const toggleShoppingItemAction = actionClient
+export const toggleShoppingItemAction = authActionClient
   .inputSchema(itemIdSchema)
   .action(async ({ parsedInput: { id } }) => {
     await toggleShoppingItem(id);
     revalidatePath('/shopping');
   });
 
-export const removeShoppingItemAction = actionClient
+export const removeShoppingItemAction = authActionClient
   .inputSchema(itemIdSchema)
   .action(async ({ parsedInput: { id } }) => {
     await removeShoppingItem(id);
@@ -70,14 +70,14 @@ export const removeShoppingItemAction = actionClient
     revalidatePath('/');
   });
 
-export const clearCheckedShoppingAction = actionClient
+export const clearCheckedShoppingAction = authActionClient
   .action(async () => {
     await clearCheckedShopping();
     revalidatePath('/shopping');
     revalidatePath('/');
   });
 
-export const clearAllShoppingAction = actionClient
+export const clearAllShoppingAction = authActionClient
   .action(async () => {
     await clearAllShopping();
     revalidatePath('/shopping');

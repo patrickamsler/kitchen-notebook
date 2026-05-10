@@ -61,10 +61,35 @@ alter table app.ingredients    enable row level security;
 alter table app.steps          enable row level security;
 alter table app.shopping_items enable row level security;
 
--- Permissive policies for anon (no auth — allow everything)
-create policy "anon_all" on app.recipe_type    for all to anon using (true) with check (true);
-create policy "anon_all" on app.recipes        for all to anon using (true) with check (true);
-create policy "anon_all" on app.recipe_types   for all to anon using (true) with check (true);
-create policy "anon_all" on app.ingredients    for all to anon using (true) with check (true);
-create policy "anon_all" on app.steps          for all to anon using (true) with check (true);
-create policy "anon_all" on app.shopping_items for all to anon using (true) with check (true);
+-- Public read: anon + authenticated can SELECT every table
+create policy "public_read" on app.recipe_type    for select to anon, authenticated using (true);
+create policy "public_read" on app.recipes        for select to anon, authenticated using (true);
+create policy "public_read" on app.recipe_types   for select to anon, authenticated using (true);
+create policy "public_read" on app.ingredients    for select to anon, authenticated using (true);
+create policy "public_read" on app.steps          for select to anon, authenticated using (true);
+create policy "public_read" on app.shopping_items for select to anon, authenticated using (true);
+
+-- Authenticated writes: INSERT / UPDATE / DELETE limited to logged-in users
+create policy "auth_write_insert" on app.recipe_type    for insert to authenticated with check (true);
+create policy "auth_write_update" on app.recipe_type    for update to authenticated using (true) with check (true);
+create policy "auth_write_delete" on app.recipe_type    for delete to authenticated using (true);
+
+create policy "auth_write_insert" on app.recipes        for insert to authenticated with check (true);
+create policy "auth_write_update" on app.recipes        for update to authenticated using (true) with check (true);
+create policy "auth_write_delete" on app.recipes        for delete to authenticated using (true);
+
+create policy "auth_write_insert" on app.recipe_types   for insert to authenticated with check (true);
+create policy "auth_write_update" on app.recipe_types   for update to authenticated using (true) with check (true);
+create policy "auth_write_delete" on app.recipe_types   for delete to authenticated using (true);
+
+create policy "auth_write_insert" on app.ingredients    for insert to authenticated with check (true);
+create policy "auth_write_update" on app.ingredients    for update to authenticated using (true) with check (true);
+create policy "auth_write_delete" on app.ingredients    for delete to authenticated using (true);
+
+create policy "auth_write_insert" on app.steps          for insert to authenticated with check (true);
+create policy "auth_write_update" on app.steps          for update to authenticated using (true) with check (true);
+create policy "auth_write_delete" on app.steps          for delete to authenticated using (true);
+
+create policy "auth_write_insert" on app.shopping_items for insert to authenticated with check (true);
+create policy "auth_write_update" on app.shopping_items for update to authenticated using (true) with check (true);
+create policy "auth_write_delete" on app.shopping_items for delete to authenticated using (true);

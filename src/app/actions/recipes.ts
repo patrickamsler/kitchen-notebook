@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { createRecipe, updateRecipe, deleteRecipe } from '@/data/mutations';
-import { actionClient } from '@/lib/safe-action';
+import { authActionClient } from '@/lib/safe-action';
 
 const recipeFormSchema = z.object({
   title: z.string().min(1),
@@ -18,7 +18,7 @@ const recipeFormSchema = z.object({
 const updateRecipeSchema = recipeFormSchema.extend({ id: z.number(), uid: z.string() });
 const deleteRecipeSchema = z.object({ id: z.number() });
 
-export const createRecipeAction = actionClient
+export const createRecipeAction = authActionClient
   .inputSchema(recipeFormSchema)
   .action(async ({ parsedInput }) => {
     const uid = await createRecipe(parsedInput);
@@ -26,7 +26,7 @@ export const createRecipeAction = actionClient
     redirect(`/recipes/${uid}`);
   });
 
-export const updateRecipeAction = actionClient
+export const updateRecipeAction = authActionClient
   .inputSchema(updateRecipeSchema)
   .action(async ({ parsedInput: { id, uid, ...data } }) => {
     await updateRecipe(id, data);
@@ -35,7 +35,7 @@ export const updateRecipeAction = actionClient
     redirect(`/recipes/${uid}`);
   });
 
-export const deleteRecipeAction = actionClient
+export const deleteRecipeAction = authActionClient
   .inputSchema(deleteRecipeSchema)
   .action(async ({ parsedInput: { id } }) => {
     await deleteRecipe(id);

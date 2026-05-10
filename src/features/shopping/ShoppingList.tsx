@@ -21,9 +21,10 @@ interface Group {
 
 interface Props {
   items: ShoppingItem[];
+  isAuthenticated: boolean;
 }
 
-export default function ShoppingList({ items }: Props) {
+export default function ShoppingList({ items, isAuthenticated }: Props) {
   const [, startTransition] = useTransition();
   const total = items.length;
   const checked = items.filter(i => i.checked).length;
@@ -59,7 +60,7 @@ export default function ShoppingList({ items }: Props) {
     <div className={styles.shopping}>
       <div className={styles.backRow}>
         <Link href="/" className={styles.backLink}><IconArrowLeft /> All recipes</Link>
-        {total > 0 && (
+        {isAuthenticated && total > 0 && (
           <div className={styles.actions}>
             {checked > 0 && (
               <Button $variant="ghost" onClick={handleClearChecked}>
@@ -117,7 +118,7 @@ export default function ShoppingList({ items }: Props) {
               </header>
               <ul className={styles.list}>
                 {group.items.map(item => (
-                  <ShoppingItemRow key={item.id} item={item} />
+                  <ShoppingItemRow key={item.id} item={item} isAuthenticated={isAuthenticated} />
                 ))}
               </ul>
             </section>
