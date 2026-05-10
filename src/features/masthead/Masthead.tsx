@@ -1,4 +1,4 @@
-import { getShopping, getRecipes } from '@/data/store';
+import { getShopping, getRecipes } from '@/data/queries';
 import MastheadShell from './MastheadShell';
 
 export default async function Masthead() {

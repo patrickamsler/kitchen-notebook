@@ -1,4 +1,4 @@
-import { getRecipe, getShopping } from '@/data/store';
+import { getRecipe, getShopping } from '@/data/queries';
 import RecipeDetailClient from '@/features/recipes/RecipeDetailClient';
 
 interface Props {

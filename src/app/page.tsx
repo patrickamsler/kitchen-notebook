@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { getRecipes } from '@/data/store';
+import { getRecipes } from '@/data/queries';
 import RecipeList from '@/features/recipes/RecipeList';
 import type { Recipe, RecipeType } from '@/lib/types';
 

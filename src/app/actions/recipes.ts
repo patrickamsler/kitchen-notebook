@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { createRecipe, updateRecipe, deleteRecipe } from '@/data/store';
+import { createRecipe, updateRecipe, deleteRecipe } from '@/data/mutations';
 import { actionClient } from '@/lib/safe-action';
 
 const recipeFormSchema = z.object({

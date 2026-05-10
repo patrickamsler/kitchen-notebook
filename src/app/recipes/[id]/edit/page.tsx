@@ -1,4 +1,4 @@
-import { getRecipe } from '@/data/store';
+import { getRecipe } from '@/data/queries';
 import RecipeForm from '@/features/recipes/RecipeForm';
 
 interface Props {

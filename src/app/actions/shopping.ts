@@ -9,7 +9,7 @@ import {
   removeShoppingByIngredient,
   clearCheckedShopping,
   clearAllShopping,
-} from '@/data/store';
+} from '@/data/mutations';
 import { actionClient } from '@/lib/safe-action';
 
 const addItemsSchema = z.object({

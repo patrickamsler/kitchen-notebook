@@ -19,9 +19,12 @@ No test suite exists yet.
 
 ### Data flow
 
-All data lives in `.data/store.json` (gitignored), seeded from `src/lib/seed.ts` on first run. `src/data/store.ts` is the **only** file that touches the filesystem — it is `server-only` and keeps an in-memory singleton to avoid redundant disk reads within a request.
+All data lives in Supabase. The data access layer is split into two `server-only` files:
 
-Pages and Server Actions call `store.ts` directly. Client components never import `store.ts`; they receive data as props from Server Components or trigger mutations via Server Actions in `src/app/actions/`.
+- `src/data/queries.ts` — read functions (`getRecipes`, `getRecipe`, `getShopping`). Imported by Server Components and pages only.
+- `src/data/mutations.ts` — write functions (`createRecipe`, `updateRecipe`, `deleteRecipe`, shopping mutations). Imported by Server Actions only.
+
+The boundary is enforced by convention at the import level: pages never import from `mutations.ts`, Server Actions never import from `queries.ts`. Client components never import either file; they receive data as props from Server Components or trigger mutations via Server Actions in `src/app/actions/`.
 
 After every mutation, Server Actions call `revalidatePath()` to invalidate the Next.js page cache so the next render sees fresh data.
 
