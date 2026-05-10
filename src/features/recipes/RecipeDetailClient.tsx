@@ -31,9 +31,10 @@ function parseNotes(notes: string): string[] {
 interface Props {
   recipe: Recipe;
   shoppingItems: ShoppingItem[];
+  isAuthenticated: boolean;
 }
 
-export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
+export default function RecipeDetailClient({ recipe, shoppingItems, isAuthenticated }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [checkedIngs, setCheckedIngs] = useState<Set<number>>(new Set());
   const [doneSteps, setDoneSteps] = useState<Set<number>>(new Set());
@@ -92,24 +93,26 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
         <Link href="/" className={styles.backLink}>
           <IconArrowLeft /> All recipes
         </Link>
-        <div className={styles.actions}>
-          {confirming ? (
-            <div className={styles.confirmBar}>
-              <span className={styles.confirmLabel}>Delete this recipe?</span>
-              <Button $variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button>
-              <Button $variant="danger" onClick={handleDelete}>Yes, delete</Button>
-            </div>
-          ) : (
-            <>
-              <Button $variant="ghost" onClick={() => setConfirming(true)}>
-                <IconTrash /> Delete
-              </Button>
-              <Link href={`/recipes/${recipe.uid}/edit`} style={{ textDecoration: 'none' }}>
-                <Button><IconEdit /> Edit</Button>
-              </Link>
-            </>
-          )}
-        </div>
+        {isAuthenticated && (
+          <div className={styles.actions}>
+            {confirming ? (
+              <div className={styles.confirmBar}>
+                <span className={styles.confirmLabel}>Delete this recipe?</span>
+                <Button $variant="ghost" onClick={() => setConfirming(false)}>Cancel</Button>
+                <Button $variant="danger" onClick={handleDelete}>Yes, delete</Button>
+              </div>
+            ) : (
+              <>
+                <Button $variant="ghost" onClick={() => setConfirming(true)}>
+                  <IconTrash /> Delete
+                </Button>
+                <Link href={`/recipes/${recipe.uid}/edit`} style={{ textDecoration: 'none' }}>
+                  <Button><IconEdit /> Edit</Button>
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <header className={styles.hero}>
@@ -140,14 +143,16 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
                 >
                   <span className={cx(styles.ingName, checked && styles.ingNameChecked)}>{ing.name}</span>
                   <span className={cx(styles.ingAmount, checked && styles.ingAmountChecked)}>{ing.amount}</span>
-                  <button
-                    type="button"
-                    className={cx(styles.quickAdd, onList && styles.quickAddOnList)}
-                    onClick={e => { e.stopPropagation(); toggleShopping(ing); }}
-                    aria-label={onList ? 'Remove from shopping list' : 'Add to shopping list'}
-                  >
-                    {onList ? <IconCheck /> : <IconPlus />}
-                  </button>
+                  {isAuthenticated && (
+                    <button
+                      type="button"
+                      className={cx(styles.quickAdd, onList && styles.quickAddOnList)}
+                      onClick={e => { e.stopPropagation(); toggleShopping(ing); }}
+                      aria-label={onList ? 'Remove from shopping list' : 'Add to shopping list'}
+                    >
+                      {onList ? <IconCheck /> : <IconPlus />}
+                    </button>
+                  )}
                 </li>
               );
             })}
@@ -157,8 +162,10 @@ export default function RecipeDetailClient({ recipe, shoppingItems }: Props) {
               <span className={styles.toast}><IconCheck /> Added to your shopping list</span>
             ) : flash?.kind === 'remove' ? (
               <span className={cx(styles.toast, styles.toastRemove)}><IconX /> Removed from your shopping list</span>
-            ) : (
+            ) : isAuthenticated ? (
               <>Tap a row to check it off · Tap <span className={styles.hintGlyph}>+</span> to add to your shopping list</>
+            ) : (
+              <>Tap a row to check it off</>
             )}
           </p>
         </aside>

@@ -27,7 +27,7 @@ const RECIPE_SELECT = `
 `;
 
 export async function getRecipes(): Promise<Recipe[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('recipes')
     .select(RECIPE_SELECT)
@@ -37,7 +37,7 @@ export async function getRecipes(): Promise<Recipe[]> {
 }
 
 export async function getRecipe(uid: string): Promise<Recipe> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('recipes')
     .select(RECIPE_SELECT)
@@ -48,7 +48,7 @@ export async function getRecipe(uid: string): Promise<Recipe> {
 }
 
 export async function getShopping(): Promise<ShoppingItem[]> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from('shopping_items')
     .select('*')

@@ -22,7 +22,7 @@ type ShoppingInsert = {
 };
 
 export async function createRecipe(data: RecipeUpdate): Promise<string> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: row, error } = await supabase
     .from('recipes')
@@ -58,7 +58,7 @@ export async function createRecipe(data: RecipeUpdate): Promise<string> {
 }
 
 export async function updateRecipe(id: number, data: RecipeUpdate): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error: recipeErr } = await supabase
     .from('recipes')
@@ -124,7 +124,7 @@ export async function updateRecipe(id: number, data: RecipeUpdate): Promise<void
 }
 
 export async function deleteRecipe(id: number): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.from('shopping_items').delete().eq('recipe_id', id);
   await supabase.from('steps').delete().eq('recipe_id', id);
   await supabase.from('ingredients').delete().eq('recipe_id', id);
@@ -134,7 +134,7 @@ export async function deleteRecipe(id: number): Promise<void> {
 
 export async function addShoppingItems(items: ShoppingInsert[]): Promise<void> {
   if (items.length === 0) return;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: existing } = await supabase
     .from('shopping_items')
@@ -164,7 +164,7 @@ export async function addShoppingItems(items: ShoppingInsert[]): Promise<void> {
 }
 
 export async function toggleShoppingItem(itemId: number): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from('shopping_items')
     .select('checked')
@@ -177,12 +177,12 @@ export async function toggleShoppingItem(itemId: number): Promise<void> {
 }
 
 export async function removeShoppingItem(itemId: number): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.from('shopping_items').delete().eq('id', itemId);
 }
 
 export async function removeShoppingByIngredient(recipeId: number, ingredientId: number): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase
     .from('shopping_items')
     .delete()
@@ -191,11 +191,11 @@ export async function removeShoppingByIngredient(recipeId: number, ingredientId:
 }
 
 export async function clearCheckedShopping(): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.from('shopping_items').delete().eq('checked', true);
 }
 
 export async function clearAllShopping(): Promise<void> {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.from('shopping_items').delete().gt('id', 0);
 }

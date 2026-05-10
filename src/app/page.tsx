@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { getRecipes } from '@/data/queries';
+import { getUser } from '@/lib/auth';
 import RecipeList from '@/features/recipes/RecipeList';
 import type { Recipe, RecipeType } from '@/lib/types';
 
@@ -44,7 +45,7 @@ export default async function HomePage({ searchParams }: PageProps) {
   const activeTypes = params.type ? (params.type.split(',') as RecipeType[]) : [];
   const sort = params.sort ?? 'newest';
 
-  const recipes = await getRecipes();
+  const [recipes, user] = await Promise.all([getRecipes(), getUser()]);
   const { filtered, counts } = filterAndSort(recipes, query, activeTypes, sort);
 
   return (
@@ -56,6 +57,7 @@ export default async function HomePage({ searchParams }: PageProps) {
         sort={sort}
         query={query}
         counts={counts}
+        isAuthenticated={!!user}
       />
     </Suspense>
   );

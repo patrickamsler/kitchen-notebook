@@ -3,14 +3,16 @@
 import Link from 'next/link';
 import styles from './MastheadShell.module.scss';
 import ShoppingPill from '@/features/shopping/ShoppingPill';
+import UserMenu from '@/features/auth/UserMenu';
 
 interface Props {
   pendingCount: number;
   totalCount: number;
   lastDate: string;
+  userEmail: string | null;
 }
 
-export default function MastheadShell({ pendingCount, totalCount, lastDate }: Props) {
+export default function MastheadShell({ pendingCount, totalCount, lastDate, userEmail }: Props) {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -26,6 +28,7 @@ export default function MastheadShell({ pendingCount, totalCount, lastDate }: Pr
         <span>
           {totalCount} {totalCount === 1 ? 'recipe' : 'recipes'} · Last edit {lastDate}
         </span>
+        <UserMenu email={userEmail} />
       </div>
     </header>
   );

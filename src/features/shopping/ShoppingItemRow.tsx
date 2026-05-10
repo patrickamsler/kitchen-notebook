@@ -9,11 +9,17 @@ import { toggleShoppingItemAction, removeShoppingItemAction } from '@/app/action
 
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(' ');
 
-export default function ShoppingItemRow({ item }: { item: ShoppingItem }) {
+interface Props {
+  item: ShoppingItem;
+  isAuthenticated: boolean;
+}
+
+export default function ShoppingItemRow({ item, isAuthenticated }: Props) {
   const [optimisticChecked, setOptimisticChecked] = useOptimistic(item.checked);
   const [, startTransition] = useTransition();
 
   const handleToggle = () => {
+    if (!isAuthenticated) return;
     startTransition(() => {
       setOptimisticChecked(!optimisticChecked);
       toggleShoppingItemAction({ id: item.id });
@@ -28,14 +34,23 @@ export default function ShoppingItemRow({ item }: { item: ShoppingItem }) {
 
   return (
     <li className={cx(styles.row, optimisticChecked && styles.rowChecked)}>
-      <button
-        type="button"
-        className={cx(styles.checkBox, optimisticChecked && styles.checkBoxChecked)}
-        onClick={handleToggle}
-        aria-label={optimisticChecked ? 'Mark as not bought' : 'Mark as bought'}
-      >
-        {optimisticChecked && <IconCheck />}
-      </button>
+      {isAuthenticated ? (
+        <button
+          type="button"
+          className={cx(styles.checkBox, optimisticChecked && styles.checkBoxChecked)}
+          onClick={handleToggle}
+          aria-label={optimisticChecked ? 'Mark as not bought' : 'Mark as bought'}
+        >
+          {optimisticChecked && <IconCheck />}
+        </button>
+      ) : (
+        <span
+          className={cx(styles.checkBox, optimisticChecked && styles.checkBoxChecked)}
+          aria-hidden="true"
+        >
+          {optimisticChecked && <IconCheck />}
+        </span>
+      )}
       <span
         className={cx(styles.name, optimisticChecked && styles.nameChecked)}
         onClick={handleToggle}
@@ -45,14 +60,16 @@ export default function ShoppingItemRow({ item }: { item: ShoppingItem }) {
       <span className={cx(styles.amount, optimisticChecked && styles.amountChecked)}>
         {item.amount || '—'}
       </span>
-      <IconButton
-        type="button"
-        className={styles.removeBtn}
-        onClick={handleRemove}
-        aria-label="Remove"
-      >
-        <IconX />
-      </IconButton>
+      {isAuthenticated && (
+        <IconButton
+          type="button"
+          className={styles.removeBtn}
+          onClick={handleRemove}
+          aria-label="Remove"
+        >
+          <IconX />
+        </IconButton>
+      )}
     </li>
   );
 }

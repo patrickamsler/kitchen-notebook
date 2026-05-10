@@ -17,18 +17,21 @@ interface Props {
   sort: string;
   query: string;
   counts: Record<string, number>;
+  isAuthenticated: boolean;
 }
 
-export default function RecipeList({ recipes, filtered, activeTypes, sort, query, counts }: Props) {
+export default function RecipeList({ recipes, filtered, activeTypes, sort, query, counts, isAuthenticated }: Props) {
   const hasFilters = activeTypes.length > 0 || query.trim().length > 0;
 
   return (
     <div>
       <div className={styles.toolbar}>
         <SearchBar value={query} count={filtered.length} total={recipes.length} />
-        <Link href="/recipes/new" className={styles.newLink}>
-          <IconPlus /> New recipe
-        </Link>
+        {isAuthenticated && (
+          <Link href="/recipes/new" className={styles.newLink}>
+            <IconPlus /> New recipe
+          </Link>
+        )}
       </div>
 
       <FilterBar activeTypes={activeTypes} sort={sort} counts={counts} />
@@ -36,16 +39,22 @@ export default function RecipeList({ recipes, filtered, activeTypes, sort, query
       {filtered.length === 0 ? (
         <EmptyState>
           <h3>{hasFilters ? 'Nothing matches those filters.' : 'Your shelf is empty.'}</h3>
-          <p>{hasFilters ? 'Try a different word, or clear the filters.' : 'Add your first recipe to get started.'}</p>
+          <p>
+            {hasFilters
+              ? 'Try a different word, or clear the filters.'
+              : isAuthenticated
+                ? 'Add your first recipe to get started.'
+                : 'Sign in to add the first recipe.'}
+          </p>
           {hasFilters ? (
             <Link href="/" style={{ textDecoration: 'none' }}>
               <Button>Clear all filters</Button>
             </Link>
-          ) : (
+          ) : isAuthenticated ? (
             <Link href="/recipes/new" style={{ textDecoration: 'none' }}>
               <Button $variant="accent"><IconPlus /> Add a recipe</Button>
             </Link>
-          )}
+          ) : null}
         </EmptyState>
       ) : (
         <div className={styles.grid}>
