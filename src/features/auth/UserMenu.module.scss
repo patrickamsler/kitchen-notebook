@@ -1,11 +1,15 @@
 .signIn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-ink-soft);
   text-decoration: none;
-  padding: 6px 12px;
+  padding: 6px 14px;
+  background: white;
   border: 1px solid var(--color-hair);
   border-radius: var(--radius-pill, 999px);
   transition: border-color var(--transition-fast), color var(--transition-fast);
@@ -16,35 +20,105 @@
   }
 }
 
-.menu {
+.container {
+  position: relative;
+  display: inline-block;
+}
+
+.trigger {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-pill, 999px);
+  background: white;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+
+  &:hover {
+    border-color: var(--color-hair-strong);
+  }
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.displayName {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-soft);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--color-bg-elev);
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  min-width: 200px;
+  padding: 12px 0 8px;
+  z-index: 100;
+}
+
+.dropName {
+  margin: 0;
+  padding: 0 16px 2px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.dropEmail {
+  margin: 0;
+  padding: 0 16px 4px;
+  font-size: 12px;
   color: var(--color-muted);
 }
 
-.email {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.dropDivider {
+  height: 1px;
+  background: var(--color-hair);
+  margin: 6px 0;
 }
 
-.signOut {
+.dropSignOut {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 16px;
   background: none;
   border: none;
+  font-family: var(--font-sans);
+  font-size: 14px;
   color: var(--color-ink-soft);
-  font-family: inherit;
-  font-size: inherit;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   cursor: pointer;
-  padding: 4px 0;
-  transition: color var(--transition-fast);
+  text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
 
-  &:hover { color: var(--color-accent-ink); }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover {
+    background: var(--color-bg-sunk);
+    color: var(--color-ink);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }

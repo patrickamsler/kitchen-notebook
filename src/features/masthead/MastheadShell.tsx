@@ -10,9 +10,10 @@ interface Props {
   totalCount: number;
   lastDate: string;
   userEmail: string | null;
+  userName: string | null;
 }
 
-export default function MastheadShell({ pendingCount, totalCount, lastDate, userEmail }: Props) {
+export default function MastheadShell({ pendingCount, totalCount, lastDate, userEmail, userName }: Props) {
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -28,7 +29,7 @@ export default function MastheadShell({ pendingCount, totalCount, lastDate, user
         <span>
           {totalCount} {totalCount === 1 ? 'recipe' : 'recipes'} · Last edit {lastDate}
         </span>
-        <UserMenu email={userEmail} />
+        <UserMenu email={userEmail} name={userName} />
       </div>
     </header>
   );

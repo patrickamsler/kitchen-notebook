@@ -12,12 +12,18 @@ export default async function Masthead() {
   const totalCount = recipes.length;
   const lastDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
+  const userName = user?.user_metadata?.full_name
+    ?? user?.user_metadata?.name
+    ?? user?.email?.split('@')[0]
+    ?? null;
+
   return (
     <MastheadShell
       pendingCount={pendingCount}
       totalCount={totalCount}
       lastDate={lastDate}
       userEmail={user?.email ?? null}
+      userName={userName}
     />
   );
 }

@@ -1,10 +1,15 @@
 .wrap {
-  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px 80px;
   animation: fadeSlide var(--transition-med) ease-out;
 }
 
 .backRow {
-  margin-bottom: 32px;
+  width: 100%;
+  max-width: 460px;
+  margin-bottom: 40px;
 }
 
 .backLink {
@@ -15,16 +20,23 @@
   color: var(--color-ink-soft);
   font-size: 13px;
   letter-spacing: 0.02em;
-  transition: color var(--transition-fast), gap var(--transition-fast);
   text-decoration: none;
+  transition: color var(--transition-fast), gap var(--transition-fast);
 
   &:hover { color: var(--color-accent-ink); gap: 12px; }
 }
 
+.card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--color-bg-elev);
+  border: 1px solid var(--color-hair);
+  border-radius: var(--radius-lg);
+  padding: 48px;
+}
+
 .header {
   margin-bottom: 36px;
-  padding-bottom: 28px;
-  border-bottom: 1px solid var(--color-hair);
 }
 
 .eyebrow {
@@ -38,12 +50,17 @@
 .title {
   font-family: var(--font-serif);
   font-weight: 300;
-  font-size: 56px;
+  font-size: 60px;
   line-height: 1;
   letter-spacing: -0.02em;
-  margin: 8px 0 16px;
-  font-variation-settings: 'opsz' 144, 'SOFT' 50;
+  margin: 10px 0 18px;
   color: var(--color-ink);
+  font-variation-settings: 'opsz' 144, 'SOFT' 50;
+
+  em {
+    font-style: italic;
+    color: var(--color-accent-ink);
+  }
 }
 
 .lede {
@@ -59,7 +76,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .field {
@@ -78,7 +95,7 @@
 
 .input {
   width: 100%;
-  background: var(--color-bg-elev);
+  background: var(--color-bg);
   border: 1px solid var(--color-hair);
   border-radius: var(--radius-md);
   padding: 14px 16px;
@@ -87,10 +104,12 @@
   font-family: var(--font-sans);
   transition: border-color var(--transition-fast), background var(--transition-fast);
 
+  &::placeholder { color: var(--color-muted); }
+
   &:focus {
     outline: none;
     border-color: var(--color-accent);
-    background: var(--color-bg);
+    background: var(--color-bg-elev);
   }
 
   &:disabled {
@@ -104,14 +123,19 @@
   font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--color-danger, #b91c1c);
-  margin: -12px 0 0;
+  margin: -8px 0 0;
 }
 
 .actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 8px;
+  margin-top: 4px;
+}
+
+.submitBtn {
+  width: 100%;
+  justify-content: center;
+  padding: 16px 20px;
+  font-size: 15px;
+  border-radius: var(--radius-md);
 }
 
 @keyframes fadeSlide {
