@@ -45,8 +45,6 @@ Reads are open to anyone; mutations (create/edit/delete) are gated behind a Supa
 2. **Authentication → Users → Add user**: create your account(s) with email + password. (Use "Auto Confirm User" if email confirmation is off.)
 3. **Authentication → URL Configuration**: set the Site URL to your prod domain and add `http://localhost:3000` under "Additional Redirect URLs" for dev.
 
-Env vars are unchanged — `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are sufficient.
-
 ## Routes
 
 | Route | Description |
