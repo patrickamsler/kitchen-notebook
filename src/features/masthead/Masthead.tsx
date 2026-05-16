@@ -1,16 +1,13 @@
-import { getShopping, getRecipes } from '@/data/queries';
+import { getShopping } from '@/data/queries';
 import { getUser } from '@/lib/auth';
 import MastheadShell from './MastheadShell';
 
 export default async function Masthead() {
-  const [shopping, recipes, user] = await Promise.all([
-    getShopping(),
-    getRecipes(),
-    getUser(),
-  ]);
-  const pendingCount = shopping.filter(it => !it.checked).length;
-  const totalCount = recipes.length;
-  const lastDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const user = await getUser();
+
+  const pendingCount = user
+    ? await getShopping().then(items => items.filter(it => !it.checked).length)
+    : 0;
 
   const userName = user?.user_metadata?.full_name
     ?? user?.user_metadata?.name
@@ -20,8 +17,6 @@ export default async function Masthead() {
   return (
     <MastheadShell
       pendingCount={pendingCount}
-      totalCount={totalCount}
-      lastDate={lastDate}
       userEmail={user?.email ?? null}
       userName={userName}
     />

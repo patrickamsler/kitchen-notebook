@@ -2,43 +2,33 @@
 
 .header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 32px;
-  padding-bottom: 28px;
+  gap: 24px;
+  padding-bottom: 20px;
   border-bottom: 1px solid var(--color-hair);
   margin-bottom: 40px;
 
   @include mq.down(sm) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 }
 
 .left {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-muted);
+  align-items: center;
+  gap: 14px;
 }
 
 .wordmark {
   font-family: var(--font-serif);
   font-weight: 300;
-  font-size: 56px;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  font-variation-settings: 'opsz' 144, 'SOFT' 50;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 72, 'SOFT' 50;
   color: var(--color-ink);
-  margin: 0;
 
   em {
     font-style: italic;
@@ -47,25 +37,33 @@
   }
 
   @include mq.down(sm) {
-    font-size: 40px;
+    font-size: 24px;
   }
 }
 
-.meta {
+.divider {
+  color: var(--color-hair-strong);
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 1;
+  user-select: none;
+}
+
+.eyebrow {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--color-muted);
-  text-align: right;
-  letter-spacing: 0.05em;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 12px;
 
   @include mq.down(sm) {
-    text-align: left;
-    align-items: flex-start;
-    flex-direction: row;
-    flex-wrap: wrap;
+    display: none;
   }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }

@@ -7,28 +7,26 @@ import UserMenu from '@/features/auth/UserMenu';
 
 interface Props {
   pendingCount: number;
-  totalCount: number;
-  lastDate: string;
   userEmail: string | null;
   userName: string | null;
 }
 
-export default function MastheadShell({ pendingCount, totalCount, lastDate, userEmail, userName }: Props) {
+export default function MastheadShell({ pendingCount, userEmail, userName }: Props) {
+  const isLoggedIn = !!userEmail;
+
   return (
     <header className={styles.header}>
       <div className={styles.left}>
-        <span className={styles.eyebrow}>Vol. 01 · Personal Edition</span>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <h1 className={styles.wordmark}>
-            The <em>Kitchen</em><br />Notebook
-          </h1>
+          <span className={styles.wordmark}>
+            The <em>Kitchen</em> Notebook
+          </span>
         </Link>
+        <span className={styles.divider} aria-hidden>|</span>
+        <span className={styles.eyebrow}>Vol. 01 · Personal</span>
       </div>
-      <div className={styles.meta}>
-        <ShoppingPill count={pendingCount} />
-        <span>
-          {totalCount} {totalCount === 1 ? 'recipe' : 'recipes'} · Last edit {lastDate}
-        </span>
+      <div className={styles.actions}>
+        {isLoggedIn && <ShoppingPill count={pendingCount} />}
         <UserMenu email={userEmail} name={userName} />
       </div>
     </header>
