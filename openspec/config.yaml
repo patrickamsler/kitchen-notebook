@@ -13,7 +13,8 @@ context: |
   against the same endpoints (ADR-009, proposed). REST, OpenAPI 3.1 contract-first, generated Angular client.
   English only at launch, but all user-facing text comes from translation files. Online only; shopping list uses short polling.
 
-  Architecture and ADRs: docs/architecture.md (ADR list in section 10). Domain model: docs/domain-model.md.
+  Architecture and ADRs: docs/architecture.md (ADR list in section 10). 
+  Domain model: docs/domain-model.md.
   Design: docs/design/design-system.md (rules, tokens, layout), docs/design/screen-inventory.md (screen IDs → requirements),
   screenshots in docs/design/screens/. Design tokens in code: frontend/src/styles/kn-tokens.css.
 
