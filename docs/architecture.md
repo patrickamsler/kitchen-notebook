@@ -2,6 +2,25 @@
 
 > Status: draft v0.1 · 2026-11-22. Hosting is **not decided yet**; everything below is hosting-neutral (containers).
 
+## Table of contents
+
+- [1. Goals and quality requirements](#1-goals-and-quality-requirements)
+- [2. Constraints](#2-constraints)
+- [3. Context](#3-context)
+- [4. Solution strategy](#4-solution-strategy)
+- [5. Building blocks](#5-building-blocks)
+- [6. Runtime views](#6-runtime-views)
+  - [6.1 Sign-up with email and verification](#61-sign-up-with-email-and-verification)
+  - [6.2 Accepting an invitation without an account](#62-accepting-an-invitation-without-an-account)
+  - [6.3 Shopping list update and polling](#63-shopping-list-update-and-polling)
+- [7. Deployment (open)](#7-deployment-open)
+- [8. Cross-cutting concepts](#8-cross-cutting-concepts)
+- [9. Tech stack](#9-tech-stack)
+- [10. Architecture decisions (ADR list)](#10-architecture-decisions-adr-list)
+  - [ADR-009 Token handling (proposed)](#adr-009-token-handling-proposed)
+- [11. Risks and technical debt](#11-risks-and-technical-debt)
+- [Open decisions (need your input)](#open-decisions-need-your-input)
+
 ## 1. Goals and quality requirements
 
 | Priority | Quality goal | Scenario |

@@ -2,6 +2,19 @@
 
 > Status: draft v0.1 · Tenancy key: `notebook_id` (shared schema, PostgreSQL row-level security).
 
+## Table of contents
+
+- [Bounded contexts](#bounded-contexts)
+- [Entities](#entities)
+- [Class diagram](#class-diagram)
+- [Invariants](#invariants)
+- [State diagrams](#state-diagrams)
+  - [Invitation](#invitation)
+  - [Shopping item](#shopping-item)
+  - [Recipe](#recipe)
+- [Domain events (internal, for later use)](#domain-events-internal-for-later-use)
+- [Open questions](#open-questions)
+
 ## Bounded contexts
 
 | Context | Responsibility | Aggregates |
