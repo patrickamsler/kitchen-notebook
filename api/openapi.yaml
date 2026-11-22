@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: The Kitchen Notebook API
+  version: 0.1.0
+  description: |
+    REST API of The Kitchen Notebook. Written by hand before the implementation (ADR-011); the Spring
+    interfaces and the Angular client are generated from this file. Each operation lists the requirement IDs
+    it implements in `x-requirements`.
+
+    Web clients authenticate with the `KN_SESSION` cookie issued after sign-in through
+    `/oauth2/authorization/keycloak`. State-changing requests need the `X-XSRF-TOKEN` header with the value
+    of the `XSRF-TOKEN` cookie. Errors are RFC 9457 problem details.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: /api
+security:
+  - sessionCookie: []
+tags:
+  - name: Me
+    description: The signed-in user.
+paths:
+  /me:
+    get:
+      tags: [Me]
+      operationId: getCurrentUser
+      summary: Get the signed-in user
+      description: Returns the identity of the signed-in user as known to Keycloak.
+      x-requirements: [PLT-03]
+      responses:
+        '200':
+          description: The signed-in user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: KN_SESSION
+  responses:
+    Unauthorized:
+      description: No valid session.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    CurrentUser:
+      type: object
+      description: Identity of the signed-in user, taken from Keycloak.
+      required: [subject, email, emailVerified, displayName]
+      properties:
+        subject:
+          type: string
+          description: Keycloak subject (`sub`), the stable user ID.
+          examples: [3f1c2b9e-7a64-4f3b-9a51-2d8c3e0f4b11]
+        email:
+          type: string
+          format: email
+          examples: [anna@example.com]
+        emailVerified:
+          type: boolean
+        displayName:
+          type: string
+          examples: [Anna Example]
+    Problem:
+      type: object
+      description: RFC 9457 problem details.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: Stable problem type, `urn:kn:problem:<slug>`.
+          examples: ['urn:kn:problem:validation']
+        title:
+          type: string
+          description: Short, human-readable summary from the message bundle.
+        status:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 599
+        detail:
+          type: string
+          description: Human-readable explanation of this occurrence.
+        instance:
+          type: string
+          format: uri-reference
+        correlationId:
+          type: string
+          description: ID to find the request in the server logs (unexpected errors).
+        errors:
+          type: array
+          description: Invalid fields of a validation error.
+          items:
+            $ref: '#/components/schemas/FieldError'
+    FieldError:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          description: Path of the invalid field, e.g. `name` or `ingredients[2].quantity`.
+        message:
+          type: string

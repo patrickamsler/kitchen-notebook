@@ -52,3 +52,7 @@ frontend/yarn-error.log*
 frontend/.pnpm-store/
 frontend/test-results/
 frontend/playwright-report/
+frontend/blob-report/
+frontend/playwright/.cache/
+# Generated from api/openapi.yaml (ng-openapi-gen)
+frontend/src/app/api/

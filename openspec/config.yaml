@@ -4,16 +4,17 @@ schema: spec-driven
 context: |
   Product: The Kitchen Notebook, a multi-tenant recipe app. A notebook is the tenant; it holds recipes,
   recipe types, members (Owner / Can edit / Can view) and one shared shopping list.
-  Requirement IDs: ACC, NB, INV, REC, SHOP, SET, IMP (e.g. REC-13). Keep IDs stable; never reuse a retired ID.
+  Requirement IDs: ACC, NB, INV, REC, SHOP, SET, IMP, PLT (platform) (e.g. REC-13). Keep IDs stable; never reuse a retired ID.
 
   Stack: Java 25 LTS, Spring Boot 4.x, PostgreSQL with Flyway, Keycloak 26.x (Google + email/password),
   Angular 22 PWA. Modular monolith (accounts, notebooks, invitations, recipes, shopping, media).
   Tenancy: shared schema, notebook_id on every tenant table, PostgreSQL row-level security (SET LOCAL app.notebook_id).
   Web sign-in: the backend is the OAuth2 client and issues a session cookie; a later native app uses bearer JWTs
-  against the same endpoints (ADR-009, proposed). REST, OpenAPI 3.1 contract-first, generated Angular client.
+  against the same endpoints (ADR-009, accepted). REST, OpenAPI 3.1 contract-first, generated Angular client.
   English only at launch, but all user-facing text comes from translation files. Online only; shopping list uses short polling.
 
-  Architecture and ADRs: docs/architecture.md (ADR list in section 10). 
+  Architecture: docs/architecture.md (ADR index in section 10). ADRs: docs/adr/NNNN-*.md.
+  Developer rules: docs/development/ (backend, frontend, testing, tenancy).
   Domain model: docs/domain-model.md.
   Design: docs/design/design-system.md (rules, tokens, layout), docs/design/screen-inventory.md (screen IDs → requirements),
   screenshots in docs/design/screens/. Design tokens in code: frontend/src/styles/kn-tokens.css.
@@ -29,7 +30,7 @@ rules:
     - Describe behaviour, not visuals; refer to screens by ID instead of describing layout in detail.
   design:
     - This is the technical design. UI look belongs in docs/design/design-system.md, not here.
-    - Record new architecture decisions in the ADR list of docs/architecture.md.
+    - Record new architecture decisions as MADR files docs/adr/NNNN-<slug>.md (copy docs/adr/template.md) and link them from the ADR index in docs/architecture.md section 10.
   tasks:
     - Include tests named after requirement IDs (e.g. "SHOP-07 duplicate ingredient creates separate row").
     - Include RLS tests for every new tenant table and Playwright tests for new user flows.

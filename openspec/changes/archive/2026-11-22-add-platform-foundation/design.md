@@ -49,7 +49,7 @@ AGENTS.md                   short agent entry point: links to README and docs/de
 Root package `app.kitchennotebook`:
 
 ```
-shared/security      SecurityFilterChain, CurrentUser, 401 entry point, logout
+shared/security      SecurityFilterChain, CurrentUser + CurrentUserProvider, 401 entry point, logout
 shared/tenancy       TenantContext (set_config per transaction), tenant SQL helpers
 shared/web           problem-details advice, message source, /api prefix
 shared/persistence   base entity (UUIDv7 id, version, timestamps), auditing
@@ -140,8 +140,10 @@ the API is the only consumer.
 - Sign-out: `POST /logout` (CSRF-protected) with `OidcClientInitiatedLogoutSuccessHandler`, which redirects to
   Keycloak's end-session endpoint and back to `/`. The SPA submits a small form with the CSRF token as a full-page
   navigation, because the response is a cross-origin redirect (PLT-04).
-- `CurrentUser` (record: subject, email, emailVerified, displayName) is resolved by an argument resolver from the
-  `OidcUser`. A later `Jwt` source plugs in behind the same resolver.
+- `CurrentUser` (record: subject, email, emailVerified, displayName) is provided by an injectable `CurrentUserProvider`
+  bean that reads the `SecurityContext` (`OidcUser` now; a later `Jwt` source plugs in behind the same provider). An
+  argument resolver is not used: controllers implement generated interfaces, whose method signatures cannot take extra
+  parameters.
 - `GET /api/me` is the only API operation in this change (PLT-03).
 
 *Alternatives:* tokens in the SPA (option A) or a separate BFF (option C). See ADR-009.
@@ -249,7 +251,7 @@ Unhandled exceptions are logged with a correlation id and answered with a generi
 | postgres (18) | 5432 | init script creates `kitchen_notebook` (roles `kn_owner`, `kn_app`) and `keycloak` databases |
 | keycloak (26.x) | 8180 | `start-dev --import-realm`, realm `kitchen-notebook`, Postgres-backed |
 | mailpit | 1025 / 8025 | SMTP for Keycloak (and the API later) |
-| minio | 9000 / 9001 | bucket `kn-media` created by a one-shot `mc` container |
+| minio | 9000 / 9001 | community image `pgsty/minio` (upstream MinIO no longer publishes images); bucket `kn-media` created by an `mc` container that then idles, so `docker compose up --wait` succeeds |
 
 Realm import: client `kn-web` (confidential, redirect `http://localhost:4200/login/oauth2/code/keycloak`, post-logout
 `http://localhost:4200/`), verify email on, SMTP → Mailpit, two verified test users (`anna@example.com`,

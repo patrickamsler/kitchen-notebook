@@ -1,0 +1,67 @@
+{
+  "realm": "kitchen-notebook",
+  "displayName": "The Kitchen Notebook",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": false,
+  "editUsernameAllowed": false,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@kitchen-notebook.local",
+    "fromDisplayName": "The Kitchen Notebook",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
+  "clients": [
+    {
+      "clientId": "kn-web",
+      "name": "Kitchen Notebook web",
+      "description": "Confidential client of the backend for the web session (ADR-009)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KN_WEB_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "rootUrl": "http://localhost:4200",
+      "baseUrl": "/",
+      "redirectUris": ["http://localhost:4200/login/oauth2/code/keycloak"],
+      "webOrigins": ["http://localhost:4200"],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:4200/"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "anna@example.com",
+      "email": "anna@example.com",
+      "emailVerified": true,
+      "firstName": "Anna",
+      "lastName": "Example",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "${KN_TEST_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "username": "ben@example.com",
+      "email": "ben@example.com",
+      "emailVerified": true,
+      "firstName": "Ben",
+      "lastName": "Example",
+      "enabled": true,
+      "credentials": [{ "type": "password", "value": "${KN_TEST_USER_PASSWORD}", "temporary": false }]
+    }
+  ]
+}

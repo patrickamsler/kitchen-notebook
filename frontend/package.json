@@ -1,0 +1,53 @@
+{
+  "name": "kitchen-notebook",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "generate:api": "ng-openapi-gen --config ng-openapi-gen.json",
+    "prestart": "npm run generate:api",
+    "start": "ng serve",
+    "prebuild": "npm run generate:api",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "serve:dist": "node scripts/serve-dist.mjs",
+    "pretest": "npm run generate:api",
+    "test": "ng test --watch=false",
+    "prelint": "npm run generate:api",
+    "lint": "ng lint",
+    "format": "prettier --write \"src/**/*.{ts,html,css}\" \"e2e/**/*.ts\"",
+    "prei18n:extract": "npm run generate:api",
+    "i18n:extract": "ng extract-i18n --output-path src/locale",
+    "prei18n:check": "npm run generate:api",
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "e2e": "playwright test"
+  },
+  "private": true,
+  "packageManager": "npm@11.17.0",
+  "dependencies": {
+    "@angular/common": "^22.3.0",
+    "@angular/compiler": "^22.3.0",
+    "@angular/core": "^22.3.0",
+    "@angular/forms": "^22.3.0",
+    "@angular/platform-browser": "^22.3.0",
+    "@angular/router": "^22.3.0",
+    "@angular/service-worker": "^22.3.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.3.0",
+    "@angular/cli": "^22.3.0",
+    "@angular/compiler-cli": "^22.3.0",
+    "@angular/localize": "^22.3.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
+    "angular-eslint": "22.8.0",
+    "eslint": "^10.14.0",
+    "jsdom": "^31.0.0",
+    "ng-openapi-gen": "^1.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "8.72.2",
+    "vitest": "^5.0.0"
+  }
+}

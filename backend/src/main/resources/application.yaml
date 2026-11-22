@@ -1,0 +1,64 @@
+# Settings come from environment variables; locally they are read from ../.env (copy of .env.example).
+# Non-secret values have local defaults. Secrets have no defaults.
+spring:
+  application:
+    name: kitchen-notebook
+  config:
+    import: optional:file:../.env[.properties]
+  datasource:
+    # The runtime role: no BYPASSRLS, owns nothing (ADR-004).
+    url: ${KN_DB_URL:jdbc:postgresql://localhost:5432/kitchen_notebook}
+    username: ${KN_DB_APP_USER:kn_app}
+    password: ${KN_APP_PASSWORD}
+  flyway:
+    # Migrations run as the schema owner, through a separate connection.
+    user: ${KN_DB_OWNER_USER:kn_owner}
+    password: ${KN_OWNER_PASSWORD}
+    locations: classpath:db/migration
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  session:
+    timeout: ${KN_SESSION_IDLE_TIMEOUT:8h}
+    jdbc:
+      initialize-schema: never
+  messages:
+    basename: messages
+    fallback-to-system-locale: false
+
+server:
+  port: ${KN_BACKEND_PORT:8080}
+  # The dev proxy (and later the reverse proxy) sets X-Forwarded-*; OAuth2 redirect URIs are built from them.
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        name: KN_SESSION
+        http-only: true
+        same-site: lax
+        secure: ${KN_COOKIE_SECURE:false}
+
+kn:
+  auth:
+    keycloak:
+      issuer-uri: ${KN_KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/kitchen-notebook}
+      client-id: ${KN_WEB_CLIENT_ID:kn-web}
+      client-secret: ${KN_WEB_CLIENT_SECRET}
+  session:
+    absolute-timeout: ${KN_SESSION_ABSOLUTE_TIMEOUT:24h}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+
+logging:
+  structured:
+    format:
+      console: ${KN_LOG_FORMAT:ecs}
