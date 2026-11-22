@@ -37,10 +37,12 @@ change add only feature behaviour, and it tackles the riskiest parts of the arch
 - **Frontend shell:** Angular 22 (standalone, zoneless, signals), PWA service worker for the app shell, `@angular/localize`
   with English translation files, `kn-tokens.css` wired globally, an empty app shell showing the signed-in email.
 - **Quality gates:** Testcontainers (PostgreSQL, Keycloak) integration tests, Playwright scaffold with one sign-in test,
-  GitHub Actions running backend and frontend builds and tests.
+  GitHub Actions running backend and frontend builds and tests. The GitHub repository allows squash merges only and
+  protects `main` with required pull requests and CI checks.
 - **Documentation:** ADRs move to `docs/adr/` as MADR files with `architecture.md` §10 as the index; ADR-006 (Spring
   Modulith) rejected, ADR-009 accepted, new ADR-011 (design-first OpenAPI with code generation). A developer
-  `README.md` (what it is, quick start, local setup, commands, repository map, workflow); the rules in
+  `README.md` (what it is, quick start, local setup, commands, repository map, and the workflow: one change = one
+  branch = one pull request, archived on the branch, squash merged into `main`); the rules in
   `docs/development/` (`backend.md`, `frontend.md`, `testing.md`, `tenancy.md`); `AGENTS.md` reduced to a short entry
   point for agents that links to both; the `config.yaml` design rule points to `docs/adr/`.
 - **Out of scope:** every feature requirement, user profile and notebook tables, onboarding, the bearer-JWT chain for a
