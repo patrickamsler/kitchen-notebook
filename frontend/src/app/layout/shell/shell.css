@@ -1,0 +1,87 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--kn-bg);
+  color: var(--kn-ink);
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kn-sp);
+  min-height: var(--kn-h-topbar);
+  padding: 0 var(--kn-gap);
+  background: var(--kn-topbar);
+  border-bottom: var(--kn-topbar-border);
+}
+
+.brand {
+  font: var(--kn-tw) var(--kn-type-title-m) var(--kn-font-brand);
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--kn-sp);
+}
+
+.signed-in-as {
+  font: var(--kn-type-body-m) var(--kn-font-plain);
+  color: var(--kn-ink2);
+}
+
+.button-outlined {
+  height: var(--kn-h-btn);
+  padding: 0 var(--kn-sp);
+  border: 1px solid var(--kn-line);
+  border-radius: var(--kn-btn-shape);
+  background: transparent;
+  color: var(--kn-ink);
+  font: var(--kn-tw) var(--kn-type-label-l) var(--kn-font-plain);
+  cursor: pointer;
+}
+
+.button-outlined:hover {
+  background: var(--kn-sunk);
+}
+
+.button-outlined:focus-visible {
+  outline: 2px solid var(--kn-focus);
+  outline-offset: 2px;
+}
+
+.content {
+  flex: 1;
+  padding: var(--kn-gap);
+}
+
+.tagline {
+  margin: 0;
+  font: var(--kn-type-body-l) var(--kn-font-plain);
+  color: var(--kn-ink2);
+}
+
+/* Phones and tablets: 48 px touch targets, account line below the brand. */
+@media (max-width: 1023px) {
+  .topbar {
+    padding: var(--kn-sp);
+  }
+
+  .account {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .button-outlined {
+    height: auto;
+    min-height: var(--kn-touch-target);
+    min-width: var(--kn-touch-target);
+  }
+
+  .content {
+    padding: var(--kn-sp);
+  }
+}

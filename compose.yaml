@@ -1,0 +1,114 @@
+# Local infrastructure only. The backend and the frontend run natively (see README.md).
+# Settings come from .env (copy .env.example). Init scripts run only on an empty volume;
+# reset with `docker compose down -v`, which deletes all local data.
+name: kitchen-notebook
+
+services:
+  postgres:
+    image: postgres:18.7-alpine
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      KN_OWNER_PASSWORD: ${KN_OWNER_PASSWORD:?set in .env}
+      KN_APP_PASSWORD: ${KN_APP_PASSWORD:?set in .env}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set in .env}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kitchen_notebook"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?set in .env}
+      KC_HTTP_PORT: "8180"
+      # Same hostname for the browser and the backend, so the token issuer always matches.
+      KC_HOSTNAME: http://localhost:8180
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN_USER:?set in .env}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set in .env}
+      # Read by the ${...} placeholders in the realm import.
+      KN_WEB_CLIENT_SECRET: ${KN_WEB_CLIENT_SECRET:?set in .env}
+      KN_TEST_USER_PASSWORD: ${KN_TEST_USER_PASSWORD:?set in .env}
+    ports:
+      - "8180:8180"
+    volumes:
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/9000 &&
+          printf 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3 &&
+          grep -q '"UP"' <&3
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  mailpit:
+    image: axllent/mailpit:v1.34
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Community build of MinIO: the upstream project no longer publishes container images.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Creates the bucket once, then idles: an exited container would make `docker compose up --wait` fail.
+  minio-init:
+    image: pgsty/mc:RELEASE.2026-11-12T00-00-00Z
+    entrypoint: ["sh", "-c"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" &&
+        mc mb --ignore-existing local/kn-media &&
+        exec sleep infinity
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set in .env}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set in .env}
+    depends_on:
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "mc", "ls", "local/kn-media"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    stop_grace_period: 1s
+
+volumes:
+  postgres-data:
+  minio-data:

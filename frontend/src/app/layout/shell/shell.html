@@ -1,0 +1,14 @@
+<header class="topbar">
+  <span class="brand" i18n="@@shell.brand">The Kitchen Notebook</span>
+  <div class="account">
+    <span class="signed-in-as" data-testid="signed-in-as" i18n="@@shell.signedInAs"
+      >Signed in as {{ email() }}</span
+    >
+    <button type="button" class="button-outlined" (click)="signOut()" i18n="@@shell.signOut">
+      Sign out
+    </button>
+  </div>
+</header>
+<main class="content">
+  <p class="tagline" i18n="@@shell.tagline">Your recipes, all in one place.</p>
+</main>

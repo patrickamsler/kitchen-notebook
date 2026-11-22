@@ -1,35 +1,30 @@
 # AGENTS instructions
 
-## Environment Setup
+The Kitchen Notebook: a multi-tenant recipe app (Angular 22 PWA, Spring Boot 4 / Java 25, PostgreSQL with RLS,
+Keycloak). A notebook is the tenant.
 
-TODO
+## Where to look
 
-## Commands
+- [README.md](README.md): setup, local stack, commands, repository map and how work happens. Do not duplicate it here.
+- Read before working in an area: [backend](docs/development/backend.md), [frontend](docs/development/frontend.md),
+  [testing](docs/development/testing.md), [tenancy](docs/development/tenancy.md).
+- Architecture and decisions: [docs/architecture.md](docs/architecture.md), [docs/adr/](docs/adr/). Look and layout:
+  [docs/design/design-system.md](docs/design/design-system.md). Specs and changes: `openspec/`.
 
-TODO
+## Non-negotiables
 
-## Repository Structure
+- Tenant tables: queries filter on `notebookId` explicitly, and every tenant table has RLS (`ENABLE` + `FORCE`, the
+  standard policy) plus RLS tests.
+- Entities never cross the service boundary: public service methods take and return DTOs, IDs or primitives.
+- Contract first: change `api/openapi.yaml` before the code; never edit or commit generated code.
+- All user-facing text comes from translation files (`messages.xlf`, `messages.properties`).
+- UI uses only tokens from `frontend/src/styles/kn-tokens.css`; 48 px touch targets on mobile; light and dark.
+- Tests are named after requirement IDs (e.g. `PLT07_rowsOfOtherNotebookInvisible`, `it('REC-02 …')`).
 
-```text
-openspec/
-  config.yaml                      # project context + rules for OpenSpec
-docs/
-  architecture.md                  # arc42 architecture, tech stack, ADR list
-  domain-model.md                  # entities, invariants, state diagrams
-  design/
-    design-system.md               # the shipped look, rules for UI work, layout, components, accessibility
-    screen-inventory.md            # screen ID → files → requirement IDs
-    screens/                       # 40 screens × desktop/mobile × light/dark + tokens board (PNG)
-frontend/
-  src/styles/kn-tokens.css         # design tokens for the shipped look — source of truth in code
-  src/assets/illustrations/
-    generic/                       # 8 illustrations users can pick (SVG, 800 × 500)
-    samples/                       # 11 sample-recipe illustrations for seed/demo data
-```
+## Branches and commits
 
-## Coding Standards
-
-TODO
+- Never commit to `main`. Work on `change/<change-name>` (small fixes: `fix/<topic>`).
+- Commit only when asked.
 
 ## Boundaries
 

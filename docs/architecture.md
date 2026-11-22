@@ -1,6 +1,6 @@
 # Architecture (arc42, condensed)
 
-> Status: draft v0.1 · 2026-11-22. Hosting is **not decided yet**; everything below is hosting-neutral (containers).
+> Status: draft v0.2 · 2026-11-22. Hosting is **not decided yet**; everything below is hosting-neutral (containers).
 
 ## Table of contents
 
@@ -16,8 +16,7 @@
 - [7. Deployment (open)](#7-deployment-open)
 - [8. Cross-cutting concepts](#8-cross-cutting-concepts)
 - [9. Tech stack](#9-tech-stack)
-- [10. Architecture decisions (ADR list)](#10-architecture-decisions-adr-list)
-  - [ADR-009 Token handling (proposed)](#adr-009-token-handling-proposed)
+- [10. Architecture decisions (ADR index)](#10-architecture-decisions-adr-index)
 - [11. Risks and technical debt](#11-risks-and-technical-debt)
 - [Open decisions (need your input)](#open-decisions-need-your-input)
 
@@ -58,11 +57,11 @@ flowchart LR
 
 ## 4. Solution strategy
 
-- **Modular monolith** in Spring Boot with modules matching the bounded contexts (`accounts`, `notebooks`, `invitations`, `recipes`, `shopping`, `media`). Module boundaries checked with **Spring Modulith** (decision pending, see ADR list).
-- **REST API, contract-first** with OpenAPI; Angular client generated from the spec.
+- **Modular monolith** in Spring Boot with modules matching the bounded contexts (`accounts`, `notebooks`, `invitations`, `recipes`, `shopping`, `media`). Plain packages by convention, layering checked with **ArchUnit** (Spring Modulith rejected, [ADR-006](adr/0006-modular-monolith-spring-modulith.md)).
+- **REST API, design-first**: hand-written `api/openapi.yaml` (OpenAPI 3.1); Spring interfaces and DTOs generated with OpenAPI Generator, Angular client with `ng-openapi-gen` ([ADR-011](adr/0011-design-first-openapi-codegen.md)).
 - **Tenancy**: shared schema, `notebook_id` on every tenant table, **PostgreSQL row-level security** as a second safety net behind service-level authorisation.
 - **Keycloak** owns credentials and sign-in methods; the app stores a user profile keyed by the Keycloak `sub`.
-- **Web sign-in through the backend** (ADR-009, proposed): the backend is the OAuth2 client and gives the browser a session cookie; a later native app uses bearer tokens against the same endpoints.
+- **Web sign-in through the backend** ([ADR-009](adr/0009-session-cookies-web-bearer-native.md), accepted): the backend is the OAuth2 client and gives the browser a session cookie; a later native app uses bearer tokens against the same endpoints.
 - **Short polling** for the shopping list (no WebSocket/SSE in v1).
 
 ## 5. Building blocks
@@ -167,17 +166,17 @@ Hosting options to decide: Kubernetes with Helm (familiar, more ops) vs a manage
 
 | Topic                     | Approach                                                                                                                                                                                                                                                                                                        |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Authentication**        | Keycloak realm`kitchen-notebook`; Google identity provider; email + password; verify email required; password reset via Keycloak. Web: the backend is a confidential OAuth2 client (`kn-web`) and issues a session cookie. Native app (later): public client (`kn-mobile`) with PKCE, bearer JWTs. See ADR-009. |
+| **Authentication**        | Keycloak realm`kitchen-notebook`; Google identity provider; email + password; verify email required; password reset via Keycloak. Web: the backend is a confidential OAuth2 client (`kn-web`) and issues a session cookie. Native app (later): public client (`kn-mobile`) with PKCE, bearer JWTs. See [ADR-009](adr/0009-session-cookies-web-bearer-native.md). |
 | **Authorisation**         | Per request: resolve membership of the user in`{notebookId}` → role. Guard by role (Owner / Can edit / Can view). No roles in the JWT for notebook access (memberships live in the app DB).                                                                                                                    |
 | **Tenancy / RLS**         | Each transaction sets`SET LOCAL app.notebook_id` and `app.user_id`; RLS policies restrict rows to that notebook. App connects as a non-owner role so RLS cannot be bypassed.                                                                                                                                    |
-| **Persistence**           | Spring Data JPA (or jOOQ — to decide), Flyway migrations, UUID keys, optimistic locking (`version`) on recipes and shopping items.                                                                                                                                                                             |
+| **Persistence**           | Spring Data JPA (jOOQ rejected), `ddl-auto=validate`, `open-in-view=false`, Flyway migrations (owner role), UUIDv7 keys, optimistic locking (`version`) in the base entity. Every query on a tenant table filters on `notebookId` explicitly. See `docs/development/backend.md`. |
 | **Sessions / CSRF**       | Spring Session JDBC in PostgreSQL (works with 2+ instances); session holds authentication only. CSRF via`CookieCsrfTokenRepository` and Angular's XSRF support, for the session chain only.                                                                                                                     |
-| **API**                   | REST, OpenAPI 3.1 contract-first, problem details (RFC 9457) for errors, ETags for polling.                                                                                                                                                                                                                     |
+| **API**                   | REST under `/api`, OpenAPI 3.1 design-first with generated server interfaces and client (ADR-011), problem details (RFC 9457, `urn:kn:problem:<slug>`) for errors, ETags for polling.                                                                                                                         |
 | **Media**                 | Upload via API (or pre-signed URL), validate type/size (JPG/PNG ≤10 MB), generate resized WebP variants, store in object storage; illustrations shipped as static SVG assets.                                                                                                                                  |
 | **Email**                 | Keycloak sends verification and reset emails; the API sends invitation emails (templated, English).                                                                                                                                                                                                             |
-| **i18n**                  | English only, but Angular built with i18n extraction from day one so German can be added later.                                                                                                                                                                                                                 |
+| **i18n**                  | English only, but all text comes from translation files: `@angular/localize` with extraction checked in CI, API messages from `messages.properties`, so German can be added later.                                                                                                                       |
 | **Observability**         | Structured JSON logs, Micrometer metrics, OpenTelemetry traces; health endpoints via Actuator.                                                                                                                                                                                                                  |
-| **Testing**               | Unit tests; Testcontainers (PostgreSQL, Keycloak) for integration tests including RLS tests; contract tests against the OpenAPI spec; Playwright E2E for main flows.                                                                                                                                            |
+| **Testing**               | JUnit unit tests (`*Test`) and Testcontainers integration tests (`*IT`, PostgreSQL and Keycloak) including RLS tests; contract conformance through generated interfaces (ADR-011); Vitest; Playwright E2E for main flows. See `docs/development/testing.md`. |
 | **Privacy (nDSG / GDPR)** | Account deletion per SET-51; minimal personal data; retention periods to define.                                                                                                                                                                                                                                |
 
 ## 9. Tech stack
@@ -186,61 +185,34 @@ Hosting options to decide: Kubernetes with Helm (familiar, more ops) vs a manage
 | Layer             | Choice                                                                                                           | Version (as of 2026-11) |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | Language          | Java                                                                                                             | 25 LTS                  |
-| Backend framework | Spring Boot (Web, Security OAuth2 Client + Resource Server, Spring Session JDBC, Data JPA, Validation, Actuator) | 4.x latest stable       |
+| Backend framework | Spring Boot (Web, Security OAuth2 Client, Spring Session JDBC, Data JPA, Validation, Actuator); Resource Server comes with the native app | 4.x latest stable       |
 | Database          | PostgreSQL + Flyway                                                                                              | 17/18                   |
 | Identity          | Keycloak (OIDC, Google IdP)                                                                                      | 26.8.x                  |
 | Frontend          | Angular (standalone components, signals, zoneless), PWA (service worker for app shell only)                      | 22                      |
 | UI components     | Fluent 2-inspired theme — implementation library to decide (see open decisions)                                 | —                      |
-| API contract      | OpenAPI 3.1, generated TypeScript client                                                                         | —                      |
+| API contract      | OpenAPI 3.1, OpenAPI Generator (Spring interfaces), `ng-openapi-gen` (Angular client)                            | —                      |
 | Object storage    | S3-compatible                                                                                                    | provider open           |
 | Email             | SMTP provider                                                                                                    | provider open           |
-| Build / CI        | Maven or Gradle (to decide), GitHub Actions (to confirm)                                                         | —                      |
-| Tests             | JUnit 5, Testcontainers, Playwright                                                                              | —                      |
+| Build / CI        | Maven (wrapper), npm, GitHub Actions                                                                             | —                      |
+| Tests             | JUnit, ArchUnit, Testcontainers, Vitest, Playwright                                                              | —                      |
 
-## 10. Architecture decisions (ADR list)
+## 10. Architecture decisions (ADR index)
 
+Each decision is a MADR file in [`docs/adr/`](adr/); new ADRs copy [`template.md`](adr/template.md) and add a row here.
 
-| ADR     | Decision                                                                                                     | Status   |
-| ------- | ------------------------------------------------------------------------------------------------------------ | -------- |
-| ADR-001 | Spring Boot 4 on Java 25                                                                                     | Accepted |
-| ADR-002 | Angular PWA (one responsive app, no native apps)                                                             | Accepted |
-| ADR-003 | Keycloak as self-hosted IdP (Google + email/password, no magic link)                                         | Accepted |
-| ADR-004 | Shared schema + PostgreSQL RLS for tenancy                                                                   | Accepted |
-| ADR-005 | Short polling instead of push for the shopping list                                                          | Accepted |
-| ADR-006 | Modular monolith (Spring Modulith?)                                                                          | Proposed |
-| ADR-007 | Hosting platform                                                                                             | Open     |
-| ADR-008 | Sign-in UI: Keycloak theme vs Angular screens                                                                | Open     |
-| ADR-009 | Session cookies from the backend for the web; bearer tokens for a later native app (hybrid, no separate BFF) | Proposed |
-| ADR-010 | Fluent 2 look in Angular: library choice                                                                     | Open     |
-
-### ADR-009 Token handling (proposed)
-
-**Context.** The web PWA comes first; a second backend instance and a native mobile app are likely later.
-
-**Proposed decision: hybrid in the backend (option B).**
-
-- **Web:** the backend is a confidential OAuth2 client (`kn-web`, `oauth2Login()`). Tokens stay on the server; the browser gets an `HttpOnly`, `Secure`, `SameSite=Lax` session cookie. Login starts with a full-page redirect to `/oauth2/authorization/keycloak`; API calls answer 401 instead of redirecting.
-- **Native app (later):** public client `kn-mobile`, Authorization Code + PKCE through the system browser (RFC 8252), bearer JWTs with audience `kn-api`.
-- **Two `SecurityFilterChain`s on the same endpoints:** requests with `Authorization: Bearer` go to the JWT resource-server chain (stateless, no CSRF); all others go to the session chain (CSRF on).
-- **`CurrentUser` abstraction:** resolves the Keycloak `sub` from an `OidcUser` or a `Jwt`, so membership checks and RLS don't depend on the sign-in path.
-- **Sessions:** Spring Session JDBC in PostgreSQL, so 2+ instances work without sticky sessions. The session holds authentication only.
-- **Same origin:** SPA and API behind one reverse proxy (`/api`), so cookies stay first-party.
-- **Logout:** RP-initiated logout to Keycloak; "Sign out everywhere" via OIDC back-channel logout.
-
-**Options considered.**
-
-
-|                       | A: Tokens everywhere      | B: Hybrid in the backend        | C: Separate BFF for the web |
-| --------------------- | ------------------------- | ------------------------------- | --------------------------- |
-| Web PWA               | Tokens in the SPA (PKCE)  | Session cookie from the backend | Session cookie from the BFF |
-| Native app            | Bearer token              | Bearer token                    | Bearer token                |
-| API                   | Stateless resource server | Session chain + JWT chain       | Stateless resource server   |
-| With 2 instances      | Nothing extra             | Spring Session JDBC             | Session store in the BFF    |
-| Deployables           | API                       | API                             | API + BFF                   |
-| Tokens exposed to XSS | Yes                       | No                              | No                          |
-| CSRF handling         | Not needed                | Session chain only              | In the BFF                  |
-
-**Consequences.** No tokens in browser JavaScript and no OIDC library in Angular. The backend becomes stateful for web requests and needs a session store. Two sign-in paths to test (Testcontainers with Keycloak covers both).
+| ID | Title | Status | File |
+| --- | --- | --- | --- |
+| ADR-001 | Spring Boot 4 on Java 25 | Accepted | [0001-spring-boot-4-on-java-25.md](adr/0001-spring-boot-4-on-java-25.md) |
+| ADR-002 | Angular PWA (one responsive app, no native apps) | Accepted | [0002-angular-pwa.md](adr/0002-angular-pwa.md) |
+| ADR-003 | Keycloak as self-hosted IdP (Google + email/password, no magic link) | Accepted | [0003-keycloak-identity-provider.md](adr/0003-keycloak-identity-provider.md) |
+| ADR-004 | Shared schema + PostgreSQL RLS for tenancy | Accepted | [0004-shared-schema-rls-tenancy.md](adr/0004-shared-schema-rls-tenancy.md) |
+| ADR-005 | Short polling instead of push for the shopping list | Accepted | [0005-short-polling-shopping-list.md](adr/0005-short-polling-shopping-list.md) |
+| ADR-006 | Modular monolith (Spring Modulith?) | Rejected (plain packages by convention) | [0006-modular-monolith-spring-modulith.md](adr/0006-modular-monolith-spring-modulith.md) |
+| ADR-007 | Hosting platform | Open | [0007-hosting-platform.md](adr/0007-hosting-platform.md) |
+| ADR-008 | Sign-in UI: Keycloak theme vs Angular screens | Open | [0008-sign-in-ui.md](adr/0008-sign-in-ui.md) |
+| ADR-009 | Session cookies from the backend for the web; bearer tokens for a later native app (hybrid, no separate BFF) | Accepted | [0009-session-cookies-web-bearer-native.md](adr/0009-session-cookies-web-bearer-native.md) |
+| ADR-010 | Fluent 2 look in Angular: library choice | Open | [0010-fluent-ui-library.md](adr/0010-fluent-ui-library.md) |
+| ADR-011 | Design-first OpenAPI with code generation | Accepted | [0011-design-first-openapi-codegen.md](adr/0011-design-first-openapi-codegen.md) |
 
 ## 11. Risks and technical debt
 
@@ -253,7 +225,5 @@ Hosting options to decide: Kubernetes with Helm (familiar, more ops) vs a manage
 
 1. **ADR-007 Hosting** and data residency.
 2. **ADR-008 Sign-in UI**: theme Keycloak to match the design, or accept Keycloak's standard pages styled lightly?
-3. **ADR-009 Tokens**: confirm the proposed hybrid (session cookies for the web, bearer tokens for a later native app).
-4. **ADR-010 Fluent look**: Fluent UI Web Components in Angular, or Angular Material/CDK themed to Fluent tokens, or own components on Angular CDK?
-5. Maven or Gradle; JPA or jOOQ; GitHub Actions?
-6. Object storage and email providers.
+3. **ADR-010 Fluent look**: Fluent UI Web Components in Angular, or Angular Material/CDK themed to Fluent tokens, or own components on Angular CDK?
+4. Object storage and email providers.

@@ -1,0 +1,30 @@
+{
+  "/api": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": false,
+    "xfwd": true,
+    "headers": { "X-Forwarded-Host": "localhost:4200" }
+  },
+  "/oauth2": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": false,
+    "xfwd": true,
+    "headers": { "X-Forwarded-Host": "localhost:4200" }
+  },
+  "/login/oauth2": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": false,
+    "xfwd": true,
+    "headers": { "X-Forwarded-Host": "localhost:4200" }
+  },
+  "/logout": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "changeOrigin": false,
+    "xfwd": true,
+    "headers": { "X-Forwarded-Host": "localhost:4200" }
+  }
+}

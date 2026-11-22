@@ -1,0 +1,10 @@
+# Generated from api/openapi.yaml
+src/app/api/
+# Design tokens: owned by docs/design/design-system.md, kept as delivered
+src/styles/kn-tokens.css
+src/locale/
+dist/
+.angular/
+coverage/
+playwright-report/
+test-results/
