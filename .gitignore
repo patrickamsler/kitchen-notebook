@@ -1,0 +1,54 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.project
+.classpath
+.settings/
+.factorypath
+*.swp
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Backend (Spring Boot: Maven / Gradle) ---
+backend/target/
+!backend/.mvn/wrapper/maven-wrapper.jar
+backend/build/
+backend/.gradle/
+!backend/gradle/wrapper/gradle-wrapper.jar
+backend/bin/
+backend/out/
+backend/src/main/resources/application-local.*
+HELP.md
+
+# --- Frontend (Angular) ---
+frontend/node_modules/
+frontend/dist/
+frontend/out-tsc/
+frontend/.angular/
+frontend/coverage/
+frontend/.sass-cache/
+frontend/e2e/*.js
+frontend/e2e/*.map
+frontend/npm-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-store/
+frontend/test-results/
+frontend/playwright-report/

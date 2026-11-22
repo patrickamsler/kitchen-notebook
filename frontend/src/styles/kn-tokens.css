@@ -1,0 +1,257 @@
+/* ==========================================================================
+   The Kitchen Notebook — design tokens (shipped look)
+   Fluent 2-inspired · Blueberry seed #4A5A9C · light + dark (follows the device)
+   Standard contrast · compact density · rounded corners · title scale 100 %
+
+   Values were resolved from the Claude Design canvas for this one look.
+   This file is the source of truth for colours, shape, elevation and sizes in code.
+   Change it through an OpenSpec change, then update docs/design/design-system.md.
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* Shape (rounded, Fluent radii) */
+  --kn-btn-shape: 4px;
+  --kn-card-shape: 8px;
+  --kn-chip-shape: 4px;
+  --kn-dialog-shape: 8px;
+  --kn-fab-shape: 4px;
+  --kn-field-shape: 4px;
+  --kn-full: 9999px;
+  --kn-img-shape: 6px;
+  --kn-ind-shape: 4px;
+  --kn-menu-shape: 8px;
+  --kn-r-full: 9999px;
+  --kn-r-lg: 8px;
+  --kn-r-md: 6px;
+  --kn-r-sm: 4px;
+  --kn-r-xl: 8px;
+  --kn-r-xs: 2px;
+  --kn-search-shape: 4px;
+  /* Elevation */
+  --kn-card-shadow: 0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.14);
+  --kn-dialog-shadow: 0 0 8px rgba(0,0,0,.12),0 32px 64px rgba(0,0,0,.14);
+  --kn-e1: 0 1px 2px rgba(0,0,0,.3),0 1px 3px 1px rgba(0,0,0,.15);
+  --kn-e2: 0 1px 2px rgba(0,0,0,.3),0 2px 6px 2px rgba(0,0,0,.15);
+  --kn-e3: 0 1px 3px rgba(0,0,0,.3),0 4px 8px 3px rgba(0,0,0,.15);
+  --kn-fab-shadow: 0 0 2px rgba(0,0,0,.12),0 4px 8px rgba(0,0,0,.14);
+  --kn-menu-shadow: 0 0 2px rgba(0,0,0,.12),0 8px 16px rgba(0,0,0,.14);
+  /* Density (compact) — sizes for desktop; keep 48px touch targets on mobile */
+  --kn-gap: 16px;
+  --kn-h-btn: 36px;
+  --kn-h-chip: 28px;
+  --kn-h-field: 48px;
+  --kn-h-li: 48px;
+  --kn-h-search: 48px;
+  --kn-h-topbar: 56px;
+  --kn-ind-w: 56px;
+  --kn-sp: 12px;
+  /* Typography */
+  --kn-eyebrow-case: none;
+  --kn-eyebrow-track: .01em;
+  --kn-font-brand: 'Segoe UI Variable Display','Segoe UI','Inter',system-ui,sans-serif;
+  --kn-font-plain: 'Segoe UI Variable Text','Segoe UI','Inter',system-ui,sans-serif;
+  --kn-hw: 600;
+  --kn-tlw: 600;
+  --kn-track: 0;
+  --kn-tw: 600;
+  /* Other */
+  --kn-card-border: 0px solid transparent;
+
+  /* Type scale (size / line height) */
+  --kn-type-display-m: 45px/52px;
+  --kn-type-headline-l: 32px/40px;
+  --kn-type-headline-m: 28px/36px;
+  --kn-type-headline-s: 24px/32px;
+  --kn-type-title-l: 22px/28px;
+  --kn-type-title-m: 16px/24px;
+  --kn-type-title-s: 14px/20px;
+  --kn-type-body-l: 16px/24px;
+  --kn-type-body-m: 14px/20px;
+  --kn-type-body-s: 12px/16px;
+  --kn-type-label-l: 14px/20px;
+  --kn-type-label-m: 12px/16px;
+  --kn-type-label-s: 11px/16px;
+  --kn-touch-target: 48px;
+}
+
+/* ---------- Light (default) ---------- */
+:root,
+:root[data-theme="light"] {
+  /* Colour roles (Material colour utilities, seed #4A5A9C, TonalSpot) */
+  --md-sys-color-error: #BA1A1A;
+  --md-sys-color-error-container: #FFDAD6;
+  --md-sys-color-inverse-on-surface: #F2F0F7;
+  --md-sys-color-inverse-primary: #B8C4FF;
+  --md-sys-color-inverse-surface: #2F3036;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-on-error-container: #93000A;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-on-primary-container: #364379;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-on-secondary-container: #424659;
+  --md-sys-color-on-surface: #1A1B21;
+  --md-sys-color-on-surface-variant: #45464F;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-on-tertiary-container: #5C3D56;
+  --md-sys-color-outline: #767680;
+  --md-sys-color-outline-variant: #C6C5D0;
+  --md-sys-color-primary: #4E5B92;
+  --md-sys-color-primary-container: #DDE1FF;
+  --md-sys-color-secondary: #5A5D72;
+  --md-sys-color-secondary-container: #DEE1F9;
+  --md-sys-color-surface: #FBF8FF;
+  --md-sys-color-surface-bright: #FBF8FF;
+  --md-sys-color-surface-container: #EFEDF4;
+  --md-sys-color-surface-container-high: #E9E7EF;
+  --md-sys-color-surface-container-highest: #E3E1E9;
+  --md-sys-color-surface-container-low: #F4F2FA;
+  --md-sys-color-surface-container-lowest: #FFFFFF;
+  --md-sys-color-surface-dim: #DBD9E0;
+  --md-sys-color-surface-variant: #E2E1EC;
+  --md-sys-color-tertiary: #75546F;
+  --md-sys-color-tertiary-container: #FFD7F4;
+  /* Semantic surfaces, ink and borders (Fluent 2-inspired) */
+  --kn-bg: #FAFAFA;
+  --kn-card: #FFFFFF;
+  --kn-chip-on: #4E5B92;
+  --kn-chip-on-ink: #FFFFFF;
+  --kn-dialog: #FFFFFF;
+  --kn-focus: #242424;
+  --kn-hair: #E0E0E0;
+  --kn-ind: #F0F0F0;
+  --kn-ind-ink: #242424;
+  --kn-ink: #242424;
+  --kn-ink2: #616161;
+  --kn-line: #8A8A8A;
+  --kn-menu: #FFFFFF;
+  --kn-nav: #FFFFFF;
+  --kn-rail: #F5F5F5;
+  --kn-rail-border: 1px solid #E0E0E0;
+  --kn-search: #FFFFFF;
+  --kn-search-border: 1px solid #8A8A8A;
+  --kn-sunk: #F0F0F0;
+  --kn-topbar: #FFFFFF;
+  --kn-topbar-border: 1px solid #E0E0E0;
+}
+
+/* ---------- Dark: follows the device ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Colour roles (Material colour utilities, seed #4A5A9C, TonalSpot) */
+    --md-sys-color-error: #FFB4AB;
+    --md-sys-color-error-container: #93000A;
+    --md-sys-color-inverse-on-surface: #2F3036;
+    --md-sys-color-inverse-primary: #4E5B92;
+    --md-sys-color-inverse-surface: #E3E1E9;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-on-error-container: #FFDAD6;
+    --md-sys-color-on-primary: #1F2D61;
+    --md-sys-color-on-primary-container: #DDE1FF;
+    --md-sys-color-on-secondary: #2C2F42;
+    --md-sys-color-on-secondary-container: #DEE1F9;
+    --md-sys-color-on-surface: #E3E1E9;
+    --md-sys-color-on-surface-variant: #C6C5D0;
+    --md-sys-color-on-tertiary: #43273F;
+    --md-sys-color-on-tertiary-container: #FFD7F4;
+    --md-sys-color-outline: #90909A;
+    --md-sys-color-outline-variant: #45464F;
+    --md-sys-color-primary: #B8C4FF;
+    --md-sys-color-primary-container: #364379;
+    --md-sys-color-secondary: #C2C5DD;
+    --md-sys-color-secondary-container: #424659;
+    --md-sys-color-surface: #121318;
+    --md-sys-color-surface-bright: #38393F;
+    --md-sys-color-surface-container: #1F1F25;
+    --md-sys-color-surface-container-high: #292A2F;
+    --md-sys-color-surface-container-highest: #34343A;
+    --md-sys-color-surface-container-low: #1A1B21;
+    --md-sys-color-surface-container-lowest: #0D0E13;
+    --md-sys-color-surface-dim: #121318;
+    --md-sys-color-surface-variant: #45464F;
+    --md-sys-color-tertiary: #E4BAD9;
+    --md-sys-color-tertiary-container: #5C3D56;
+    /* Semantic surfaces, ink and borders (Fluent 2-inspired) */
+    --kn-bg: #1F1F1F;
+    --kn-card: #292929;
+    --kn-chip-on: #B8C4FF;
+    --kn-chip-on-ink: #1F2D61;
+    --kn-dialog: #2E2E2E;
+    --kn-focus: #FFFFFF;
+    --kn-hair: #3D3D3D;
+    --kn-ind: #333333;
+    --kn-ind-ink: #FFFFFF;
+    --kn-ink: #FFFFFF;
+    --kn-ink2: #D6D6D6;
+    --kn-line: #8F8F8F;
+    --kn-menu: #2E2E2E;
+    --kn-nav: #292929;
+    --kn-rail: #141414;
+    --kn-rail-border: 1px solid #3D3D3D;
+    --kn-search: #292929;
+    --kn-search-border: 1px solid #8F8F8F;
+    --kn-sunk: #333333;
+    --kn-topbar: #292929;
+    --kn-topbar-border: 1px solid #3D3D3D;
+  }
+}
+
+/* ---------- Dark: forced (tests, screenshots) ---------- */
+:root[data-theme="dark"] {
+  /* Colour roles (Material colour utilities, seed #4A5A9C, TonalSpot) */
+  --md-sys-color-error: #FFB4AB;
+  --md-sys-color-error-container: #93000A;
+  --md-sys-color-inverse-on-surface: #2F3036;
+  --md-sys-color-inverse-primary: #4E5B92;
+  --md-sys-color-inverse-surface: #E3E1E9;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-on-error-container: #FFDAD6;
+  --md-sys-color-on-primary: #1F2D61;
+  --md-sys-color-on-primary-container: #DDE1FF;
+  --md-sys-color-on-secondary: #2C2F42;
+  --md-sys-color-on-secondary-container: #DEE1F9;
+  --md-sys-color-on-surface: #E3E1E9;
+  --md-sys-color-on-surface-variant: #C6C5D0;
+  --md-sys-color-on-tertiary: #43273F;
+  --md-sys-color-on-tertiary-container: #FFD7F4;
+  --md-sys-color-outline: #90909A;
+  --md-sys-color-outline-variant: #45464F;
+  --md-sys-color-primary: #B8C4FF;
+  --md-sys-color-primary-container: #364379;
+  --md-sys-color-secondary: #C2C5DD;
+  --md-sys-color-secondary-container: #424659;
+  --md-sys-color-surface: #121318;
+  --md-sys-color-surface-bright: #38393F;
+  --md-sys-color-surface-container: #1F1F25;
+  --md-sys-color-surface-container-high: #292A2F;
+  --md-sys-color-surface-container-highest: #34343A;
+  --md-sys-color-surface-container-low: #1A1B21;
+  --md-sys-color-surface-container-lowest: #0D0E13;
+  --md-sys-color-surface-dim: #121318;
+  --md-sys-color-surface-variant: #45464F;
+  --md-sys-color-tertiary: #E4BAD9;
+  --md-sys-color-tertiary-container: #5C3D56;
+  /* Semantic surfaces, ink and borders (Fluent 2-inspired) */
+  --kn-bg: #1F1F1F;
+  --kn-card: #292929;
+  --kn-chip-on: #B8C4FF;
+  --kn-chip-on-ink: #1F2D61;
+  --kn-dialog: #2E2E2E;
+  --kn-focus: #FFFFFF;
+  --kn-hair: #3D3D3D;
+  --kn-ind: #333333;
+  --kn-ind-ink: #FFFFFF;
+  --kn-ink: #FFFFFF;
+  --kn-ink2: #D6D6D6;
+  --kn-line: #8F8F8F;
+  --kn-menu: #2E2E2E;
+  --kn-nav: #292929;
+  --kn-rail: #141414;
+  --kn-rail-border: 1px solid #3D3D3D;
+  --kn-search: #292929;
+  --kn-search-border: 1px solid #8F8F8F;
+  --kn-sunk: #333333;
+  --kn-topbar: #292929;
+  --kn-topbar-border: 1px solid #3D3D3D;
+}

@@ -1,0 +1,43 @@
+# openspec/config.yaml — The Kitchen Notebook
+schema: spec-driven
+
+context: |
+  Product: The Kitchen Notebook, a multi-tenant recipe app. A notebook is the tenant; it holds recipes,
+  recipe types, members (Owner / Can edit / Can view) and one shared shopping list.
+  Requirement IDs: ACC, NB, INV, REC, SHOP, SET, IMP (e.g. REC-13). Keep IDs stable; never reuse a retired ID.
+
+  Stack: Java 25 LTS, Spring Boot 4.x, PostgreSQL with Flyway, Keycloak 26.x (Google + email/password),
+  Angular 22 PWA. Modular monolith (accounts, notebooks, invitations, recipes, shopping, media).
+  Tenancy: shared schema, notebook_id on every tenant table, PostgreSQL row-level security (SET LOCAL app.notebook_id).
+  Web sign-in: the backend is the OAuth2 client and issues a session cookie; a later native app uses bearer JWTs
+  against the same endpoints (ADR-009, proposed). REST, OpenAPI 3.1 contract-first, generated Angular client.
+  English only at launch, but all user-facing text comes from translation files. Online only; shopping list uses short polling.
+
+  Architecture and ADRs: docs/architecture.md (ADR list in section 10). Domain model: docs/domain-model.md.
+  Design: docs/design/design-system.md (rules, tokens, layout), docs/design/screen-inventory.md (screen IDs → requirements),
+  screenshots in docs/design/screens/. Design tokens in code: frontend/src/styles/kn-tokens.css.
+
+rules:
+  proposal:
+    - List the affected requirement IDs and screen IDs (see docs/design/screen-inventory.md).
+    - If the UI changes, add updated screenshots to ui/ in the change folder, named like the files in docs/design/screens/.
+    - State whether the change touches tenancy, authorisation or sign-in; if it does, say how RLS and role checks stay correct.
+  specs:
+    - Name each requirement with its ID, e.g. "REC-13 Add ingredient to shopping list".
+    - Write scenarios as Given / When / Then; cover Owner, Can edit and Can view where access matters.
+    - Describe behaviour, not visuals; refer to screens by ID instead of describing layout in detail.
+  design:
+    - This is the technical design. UI look belongs in docs/design/design-system.md, not here.
+    - Record new architecture decisions in the ADR list of docs/architecture.md.
+  tasks:
+    - Include tests named after requirement IDs (e.g. "SHOP-07 duplicate ingredient creates separate row").
+    - Include RLS tests for every new tenant table and Playwright tests for new user flows.
+    - UI tasks use only tokens from kn-tokens.css, keep 48 px touch targets on mobile and put all text in translation files.
+
+operations:
+  apply:
+    guidance:
+      - Check light and dark mode and both desktop and mobile layouts against the referenced screens.
+  archive:
+    guidance:
+      - Move updated screenshots from ui/ to docs/design/screens/ and update screen-inventory.md if screens were added.
