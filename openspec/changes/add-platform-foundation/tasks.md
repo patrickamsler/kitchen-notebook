@@ -11,11 +11,11 @@
 ## 2. Local infrastructure
 
 - [ ] 2.1 Add `.env.example` (DB, Keycloak, client secret, test-user passwords, MinIO, Mailpit; local-only values, clearly marked) and verify `.env` stays gitignored
-- [ ] 2.2 Add `infra/postgres/init/` scripts creating the `kitchen_notebook` database with roles `kn_owner` (owner) and `kn_app` (login, no `BYPASSRLS`, no ownership), plus the `keycloak` database; verify with `psql` that `kn_app` has `rolbypassrls = false`
+- [ ] 2.2 Add `infra/postgres/init/01-roles-and-databases.sh` (`psql` with `ON_ERROR_STOP=1`, passwords from env) creating roles `kn_owner` and `kn_app` (login, `NOBYPASSRLS`, no ownership), the `kitchen_notebook` database owned by `kn_owner` with `CONNECT` for `kn_app`, and the `keycloak` database and user; verify after `docker compose down -v && docker compose up -d` with `psql` that `kn_app` has `rolbypassrls = false` and can connect
 - [ ] 2.3 Add `infra/keycloak/realm-kitchen-notebook.json`: client `kn-web` (confidential, redirect and post-logout URIs for `localhost:4200`), verify email on, SMTP → Mailpit, verified test users `anna@example.com` and `ben@example.com`, `${ENV}` placeholders for secrets; verify the realm imports on start
 - [ ] 2.4 Add `compose.yaml` with postgres 18, keycloak 26.x (`start-dev --import-realm`, port 8180), mailpit, minio, and a one-shot bucket `kn-media` creator; verify `docker compose up -d` gets all services healthy
 - [ ] 2.5 PLT-11 emails caught locally: trigger "forgot password" for Anna in Keycloak and verify the mail appears in Mailpit (localhost:8025)
-- [ ] 2.6 Write `AGENTS.md` "Environment Setup" (prerequisites: Docker, Java 25, Node LTS from `.nvmrc`; copy `.env.example`; `docker compose up -d`; service URLs and test users) and verify by following it on a clean checkout
+- [ ] 2.6 Write `AGENTS.md` "Environment Setup" (prerequisites: Docker, Java 25, Node LTS from `.nvmrc`; copy `.env.example`; `docker compose up -d`; service URLs and test users; init scripts run only on an empty volume, reset with `docker compose down -v`, which deletes local data) and verify by following it on a clean checkout
 
 ## 3. API contract
 
@@ -23,13 +23,14 @@
 
 ## 4. Backend shell
 
-- [ ] 4.1 Create the Maven project in `backend/` (wrapper, Java 25, Spring Boot 4.x: Web, Security, OAuth2 Client, Session JDBC, Data JPA, Validation, Actuator, Flyway, PostgreSQL, Testcontainers, ArchUnit) and verify `./mvnw -B verify` succeeds
+- [ ] 4.1 Create the Maven project in `backend/` (wrapper, Java 25, Spring Boot 4.x: Web, Security, OAuth2 Client, Session JDBC, Data JPA, Validation, Actuator, Flyway, PostgreSQL, Testcontainers, ArchUnit; Surefire for `*Test`, Failsafe for `*IT`) and verify `./mvnw -B verify` succeeds and runs both test kinds
 - [ ] 4.2 Configure the OpenAPI Generator Maven plugin (`spring`, `interfaceOnly`, `useTags`, `skipDefaultInterface`, Jakarta validation, output in `target/`) against `../api/openapi.yaml`; verify PLT-09 by a build that fails while `MeApi` is unimplemented
-- [ ] 4.3 Create the package layout from design D2 (`shared/{security,tenancy,web,persistence}`, empty feature packages with `package-info.java`) and an ArchUnit test that `shared` does not depend on feature packages; verify the test passes
-- [ ] 4.4 Configure `application.yaml` (env vars with local defaults, optional import of `../.env`, `ddl-auto=validate`, `open-in-view=false`, JSON logging, Actuator health only with details hidden, `server.forward-headers-strategy=framework`) and verify the app starts against Compose
-- [ ] 4.5 Add Flyway `V1__baseline.sql` (Spring Session JDBC tables, `kn_current_notebook_id()` / `kn_current_user_id()` helpers, default grants for `kn_app`). Flyway runs as `kn_owner`, the app as `kn_app`; verify the migration on a fresh Testcontainers database
-- [ ] 4.6 Add the base entity in `shared/persistence` (UUIDv7 id, `@Version`, created/updated timestamps) and verify with a test-only entity that the id is generated and the version increments
-- [ ] 4.7 Implement problem-details handling (`ResponseEntityExceptionHandler` advice, `urn:kn:problem:<slug>` types, `title` / `detail` from `messages.properties`, `errors[]` for validation, generic 500 with correlation id); verify with tests `PLT08_validationErrorListsFields`, `PLT08_unexpectedErrorHidesInternals` and `PLT10_apiMessageFromBundle`
+- [ ] 4.3 Create the package layout from design D2 (`shared/{security,tenancy,web,persistence}`, empty feature packages with `package-info.java`) and an `ArchitectureTest` with the seven ArchUnit rules from D2: `shared` is independent of features; `api` doesn't use `domain` / `persistence`; repositories only from the same feature's `service`; public `@Service` methods return no `@Entity`; `@Transactional` only in `service` and `shared/tenancy`; no Spring stereotypes in `domain`; no `*Helper` / `*Utils` classes. Verify each rule fails against a deliberately violating fixture class and passes on the real code
+- [ ] 4.4 Write `AGENTS.md` "Coding Standards" for the backend layering (D2: transaction boundary, DTOs at the API, entities as POJOs, `<Entity>s` static helpers, capability-named `@Component` helpers), for queries (D6: explicit `notebookId` filter, derived methods vs JPQL text blocks vs native SQL, projections, fetching, soft delete, `*IT` per custom query) and for test naming (D11: JUnit `*Test` / `*IT`, `<REQID>_<behaviour>` with `@DisplayName("<REQ-ID> …")`, Vitest `it('<REQ-ID> …')`, Playwright `test('<REQ-ID> …', { tag: ['@<REQ-ID>'] })`, given/when/then); verify every PLT test in this change follows it
+- [ ] 4.5 Configure `application.yaml` (env vars with local defaults, optional import of `../.env`, `ddl-auto=validate`, `open-in-view=false`, JSON logging, Actuator health only with details hidden, `server.forward-headers-strategy=framework`) and verify the app starts against Compose
+- [ ] 4.6 Add Flyway `V1__baseline.sql` (Spring Session JDBC tables, `kn_current_notebook_id()` / `kn_current_user_id()` helpers, default grants for `kn_app`). Flyway runs as `kn_owner`, the app as `kn_app`. Add the shared Testcontainers configuration (PostgreSQL 18 that copies `infra/postgres/init/` into `/docker-entrypoint-initdb.d`, with passwords as container env; Flyway as `kn_owner`, datasource as `kn_app`) and verify the migration on a fresh container
+- [ ] 4.7 Add the base entity in `shared/persistence` (UUIDv7 id, `@Version`, created/updated timestamps) and verify with a test-only entity that the id is generated and the version increments
+- [ ] 4.8 Implement problem-details handling (`ResponseEntityExceptionHandler` advice, `urn:kn:problem:<slug>` types, `title` / `detail` from `messages.properties`, `errors[]` for validation, generic 500 with correlation id); verify with tests `PLT08_validationErrorListsFields`, `PLT08_unexpectedErrorHidesInternals` and `PLT10_apiMessageFromBundle`
 
 ## 5. Web sign-in and session (ADR-009)
 
@@ -44,7 +45,7 @@
 
 - [ ] 6.1 Implement `TenantContext` in `shared/tenancy` (`set_config(..., true)` for `app.notebook_id` and `app.user_id`; fails fast outside a transaction) and verify with a unit test for the no-transaction case
 - [ ] 6.2 Add a test-only migration location with table `rls_probe(id, notebook_id, label)`, `ENABLE` + `FORCE ROW LEVEL SECURITY` and the standard policy from design D5; verify the migration runs only in tests
-- [ ] 6.3 Write RLS tests running as `kn_app`: `PLT07_rowsOfOtherNotebookInvisible`, `PLT07_noTenantContextNoRows`, `PLT07_writeIntoOtherNotebookRejected`, `PLT07_contextDoesNotLeakAcrossPooledConnections` (pool size 1); verify all pass
+- [ ] 6.3 Write RLS tests running as `kn_app` on the shared Testcontainers configuration from 4.6: `PLT07_rowsOfOtherNotebookInvisible`, `PLT07_noTenantContextNoRows`, `PLT07_writeIntoOtherNotebookRejected`, `PLT07_contextDoesNotLeakAcrossPooledConnections` (pool size 1); verify all pass and that Flyway ran as `kn_owner`
 - [ ] 6.4 Document the tenant-table recipe (columns, policy template, grants, required RLS tests) in `AGENTS.md` "Coding Standards" and verify it matches the `rls_probe` migration
 
 ## 7. Frontend shell

@@ -53,10 +53,75 @@ shared/persistence   base entity (UUIDv7 id, version, timestamps), auditing
 accounts/ notebooks/ invitations/ recipes/ shopping/ media/   feature packages (empty, package-info only)
 ```
 
-Inside a feature package: `api` (controller implementing the generated interface), `domain` (entities, services),
-`persistence` (repositories). Feature packages may depend on `shared`, never on each other's internals; this is a
-convention reviewed in PRs. A lightweight ArchUnit test enforces "`shared` does not depend on features".
-*Alternative:* Spring Modulith (ADR-006) was rejected in favour of plain packages by convention.
+**Inside a feature package** (example `recipes`):
+
+```
+recipes/
+  api/            RecipeController implements generated RecipesApi; no logic beyond delegating
+  service/        RecipeService (@Service, @Transactional) - the transaction boundary
+                  RecipeMapper (@Component: entity -> generated DTO, DTO -> entity changes)
+                  capability helpers needing collaborators (@Component, e.g. RecipeSoftDeletion)
+  domain/         Recipe, Ingredient, Step (@Entity POJOs), value objects, domain exceptions
+                  Recipes (final, static, pure helpers for Recipe, e.g. Recipes.scale(recipe, servings))
+  persistence/    Spring Data repositories
+```
+
+**Entities and helpers:**
+
+- **Entities are POJOs:** fields with JPA annotations, getters and setters, a protected no-arg constructor,
+  `equals` / `hashCode` on the id. They contain no business logic.
+- **Pure logic lives in a plural static helper** in `domain/`, named after the entity (`Notebook` → `Notebooks`,
+  `Recipe` → `Recipes`). It is final with a private constructor, has only static methods, and does no I/O and no Spring
+  (it is never a bean). It works only on entities and values passed in, so it is unit-testable without a context. A
+  plural class name always means such a static helper, never a repository.
+- **Logic that needs collaborators** (repositories, other services, clock, mail) is a `@Component` in `service/`, named
+  for its capability (`NotebookOwnershipTransfer`, `InvitationTokenIssuer`). It runs inside the caller's transaction.
+- **No `*Helper` / `*Utils` classes:** they tend to become dumping grounds.
+- **Invariants** are changed only through helpers or services, not by calling setters directly from controllers or
+  other features. With setter-based POJOs this is a review convention.
+
+Generated API DTOs live in `app.kitchennotebook.api.model` (from `api/openapi.yaml`, see D7), and generated
+interfaces in `app.kitchennotebook.api`.
+
+**Layer rules:**
+
+```
+ HTTP --JSON--> controller --DTO--> service [@Transactional ...............] --> repository
+                    ^                  |  entities live only in here        |
+                    +------DTO---------+  service <-> service / helper:      |
+                                          entities may be passed            |
+                                       [.......................................]
+```
+
+- **Transaction boundary = public service methods.** Services carry `@Transactional` (class level, with
+  `readOnly = true` on queries). Controllers, mappers called from controllers and the web layer never open
+  transactions. `TenantContext` (D5) is set at the start of each service transaction.
+- **Entities never cross the boundary.** Public service methods take and return generated API DTOs, IDs, primitives or
+  `CurrentUser`, never entities. Inside the transaction, entities may be passed to other services, mappers and helpers
+  (joining the same transaction). Mapping to DTOs happens inside the service, so lazy associations load within the
+  transaction. `open-in-view=false` makes violations fail fast with `LazyInitializationException`.
+- **Mappers** are hand-written `@Component`s in `service/`, so no new dependency is needed. MapStruct can be adopted
+  later if mapping becomes repetitive.
+- **The API works with DTOs.** The generated DTOs carry the Jackson annotations (`@JsonProperty`, nullability) and Jakarta
+  validation annotations derived from the contract (`required`, `minLength`/`maxLength`, `pattern`,
+  `minimum`/`maximum`). Field-level **input validation therefore happens on the DTOs**: the generated interfaces mark
+  request bodies `@Valid`, and failures become 400 problem details (D8). Constraints are added in `api/openapi.yaml`,
+  never by editing generated code.
+- **Business rules stay in the service.** Rules needing data or state (e.g. type names unique per notebook, last
+  owned notebook) are checked in the service and raised as domain exceptions, which the advice maps to problem details.
+- **Repositories** are used only by services in the same feature.
+- **Cross-feature calls** go through another feature's public service (DTOs or IDs at its public methods; entities only
+  when called inside an ongoing transaction). Never call another feature's repository.
+
+**Enforcement:** ArchUnit tests check that (1) `shared` does not depend on feature packages, (2) `api` packages do not
+depend on `domain` or `persistence`, (3) repositories are accessed only from `service` packages of the same feature,
+(4) public methods of `@Service` classes do not return `@Entity` types, and (5) `@Transactional` appears only in
+`service` packages and `shared/tenancy`, (6) classes in `domain` packages carry no Spring stereotype annotations, and
+(7) no class name ends in `Helper` or `Utils`.
+
+*Alternatives:* Spring Modulith (ADR-006) was rejected in favour of plain packages by convention. Separate service-level
+records mapped to API DTOs in the controller were rejected: a second model and double mapping without benefit while
+the API is the only consumer.
 
 ### D3 Web sign-in: session chain only (ADR-009 accepted)
 
@@ -90,6 +155,11 @@ Keycloak runs at `localhost:8180`, the same hostname for the browser and the bac
 
 - **Roles:** `kn_owner` owns the schema and is used only by Flyway. `kn_app` (runtime) has DML grants only, is not the
   table owner and has no `BYPASSRLS`. Tenant tables also get `FORCE ROW LEVEL SECURITY` as a second guard.
+- **Who creates what:** roles and databases are cluster-level objects, created by the init script in
+  `infra/postgres/init/` (D10). Everything inside the database (schema, tables, policies, functions, and the
+  `kn_app` grants via `ALTER DEFAULT PRIVILEGES`) is created by Flyway running as `kn_owner`. Testcontainers reuses
+  the same init script, so Compose, the backend tests and CI share one definition of the roles. In production
+  (managed PostgreSQL) the hosting setup (ADR-007) creates the same roles; the script documents what is required.
 - **Context:** `TenantContext` runs `select set_config('app.notebook_id', ?, true), set_config('app.user_id', ?, true)`
   on the transaction's connection. `is_local = true` is the parameterisable form of `SET LOCAL`, so values end with
   the transaction and never leak through the pool. It fails fast if no transaction is active.
@@ -111,11 +181,30 @@ Spring Session tables and the tenant helper function). UUIDv7 primary keys gener
 optimistic locking in the base entity. *Alternative:* jOOQ. Rejected for now: more build machinery, and
 `@Version` / repositories come for free with JPA; native SQL remains available for search.
 
+**Queries** (rules for feature changes; this change has no application queries yet):
+
+| Topic | Rule |
+|---|---|
+| Tenant filter | Every query on a tenant table takes `notebookId` explicitly and filters on it. Service-level authorisation comes first; RLS (D5) is the second safety net, not the only one |
+| Simple lookups | Short derived query methods only: `findByIdAndNotebookId`, `existsByNotebookIdAndNameIgnoreCase` |
+| Joins, fetches, more than ~2 conditions | `@Query` with JPQL in a text block and named parameters; no long derived method names |
+| PostgreSQL-specific features | `@Query(nativeQuery = true)` for search (REC-03: ILIKE / `pg_trgm` over titles, descriptions, ingredients) and bulk purges |
+| List and read views | Record projections (`select new ...RecipeCardRow(...)`) instead of loading entities; mapped to API DTOs in the service |
+| Fetching | Associations `LAZY`, never `EAGER`; load what the mapper needs with `@EntityGraph` or `join fetch` (no N+1) |
+| Bulk writes | `@Modifying(clearAutomatically = true)`, e.g. removing the shopping items of a deleted recipe (REC-32) |
+| Soft delete | Filtered explicitly in queries (`deletedAt is null`), not with `@SQLRestriction`, because undo and purge must see deleted rows |
+| Not used | Criteria API, Specifications, Querydsl; reconsider only if many dynamic filters appear |
+| Tests | Every custom query has an `*IT` against real PostgreSQL (Testcontainers), never H2 |
+
+*Alternative:* relying on RLS alone for tenant filtering. Rejected: a missing policy, a forgotten `FORCE` or a connection
+running as the owner would leak data silently, which contradicts quality goal 1 (tenant isolation).
+
 ### D7 Design-first contract with code generation (ADR-011)
 
 - `api/openapi.yaml` (OpenAPI 3.1) is written by hand; server URL `/api`; shared `Problem` schema (RFC 9457). Each
   operation has an `operationId` and an `x-requirements` list (e.g. `[PLT-03]`) for traceability.
-- **Backend:** OpenAPI Generator Maven plugin, `spring` generator, `interfaceOnly`, `useTags`, `skipDefaultInterface`
+- **Backend:** OpenAPI Generator Maven plugin, `spring` generator, `interfaceOnly`, `useTags`, `skipDefaultInterface`,
+  `useBeanValidation`, packages `app.kitchennotebook.api` / `app.kitchennotebook.api.model`
   (unimplemented operations fail compilation, PLT-09), Jakarta validation annotations, output under `target/` (not
   committed). Controllers implement the generated interfaces.
 - **Frontend:** `ng-openapi-gen` generates services and models into `src/app/api/` (gitignored), run by the `prestart`
@@ -165,11 +254,38 @@ Realm import: client `kn-web` (confidential, redirect `http://localhost:4200/log
 `.env.example` are local-only. The Google IdP is left out and comes with the ACC sign-in change. The backend reads
 configuration from environment variables with local defaults (`application.yaml`) and optionally imports `../.env`.
 
+**PostgreSQL init script.** Compose mounts `infra/postgres/init/` read-only at `/docker-entrypoint-initdb.d`. The
+official image runs the files there in alphabetical order, as the superuser, **only on the first start with an empty
+data volume**; later starts skip them. The scripts are `.sh` (e.g. `01-roles-and-databases.sh` running `psql` with
+`ON_ERROR_STOP=1`), so passwords come from `.env` (`KN_OWNER_PASSWORD`, `KN_APP_PASSWORD`, `KEYCLOAK_DB_PASSWORD`)
+and are never committed. They create:
+
+- the roles `kn_owner` (login) and `kn_app` (login, `NOBYPASSRLS`, `NOSUPERUSER`),
+- the database `kitchen_notebook` owned by `kn_owner`, with `CONNECT` for `kn_app`,
+- the database `keycloak` with its own user.
+
+Changing a script requires resetting the local database: `docker compose down -v && docker compose up -d`, which
+deletes local data. Testcontainers copies the same directory into its container's `/docker-entrypoint-initdb.d`
+with the passwords as container environment variables (D5, D11).
+
 ### D11 Testing and CI
 
 - Backend: JUnit 5, Testcontainers (PostgreSQL, Keycloak via `testcontainers-keycloak`) with `@ServiceConnection`
-  where available. Tests are named after requirement IDs (`PLT07_rowsOfOtherNotebookInvisible`).
+  where available. Unit tests (`*Test`, no Spring context) run with Surefire; integration tests (`*IT`, Spring and
+  Testcontainers) run with Failsafe, so `mvn test` stays fast and `mvn verify` runs both.
 - Frontend: Vitest unit tests; Playwright `e2e/` with one test: sign in as Anna → shell shows her email → sign out.
+- **Test naming** (full rules in `AGENTS.md` "Coding Standards"; requirement ID first, so searching for an ID finds
+  spec, contract and tests):
+
+  ```
+  JUnit       class  <ClassUnderTest>Test | <Feature><Topic>IT   (RLS: <Table>RlsIT)
+              method <REQID>_<behaviour>   PLT07_rowsOfOtherNotebookInvisible
+              @DisplayName("PLT-07 rows of another notebook are invisible")
+              without a requirement:  <behaviour>_when<Condition>
+  Vitest      <name>.spec.ts next to the source; describe('<Unit>'); it('REC-02 shows the creator avatar')
+  Playwright  e2e/<feature>.spec.ts; test('SHOP-03 ticking moves an item to In the basket', { tag: ['@SHOP-03'] })
+  All         one scenario = one test; body structured // given // when // then
+  ```
 - GitHub Actions: `backend` (Temurin 25, `mvn -B verify`), `frontend` (npm ci, generate client, lint, test, build,
   i18n check), `e2e` (compose up, start backend and `ng serve`, Playwright).
 
