@@ -39,8 +39,10 @@ change add only feature behaviour, and it tackles the riskiest parts of the arch
 - **Quality gates:** Testcontainers (PostgreSQL, Keycloak) integration tests, Playwright scaffold with one sign-in test,
   GitHub Actions running backend and frontend builds and tests.
 - **Documentation:** ADRs move to `docs/adr/` as MADR files with `architecture.md` §10 as the index; ADR-006 (Spring
-  Modulith) rejected, ADR-009 accepted, new ADR-011 (design-first OpenAPI with code generation). `AGENTS.md` gets
-  environment setup, commands and coding standards; the `config.yaml` design rule points to `docs/adr/`.
+  Modulith) rejected, ADR-009 accepted, new ADR-011 (design-first OpenAPI with code generation). A developer
+  `README.md` (what it is, quick start, local setup, commands, repository map, workflow); the rules in
+  `docs/development/` (`backend.md`, `frontend.md`, `testing.md`, `tenancy.md`); `AGENTS.md` reduced to a short entry
+  point for agents that links to both; the `config.yaml` design rule points to `docs/adr/`.
 - **Out of scope:** every feature requirement, user profile and notebook tables, onboarding, the bearer-JWT chain for a
   native app, Keycloak theme (ADR-008), UI component library (ADR-010), hosting (ADR-007), media upload.
 
@@ -72,4 +74,5 @@ None.
 - **Dependencies:** Spring Boot starters (Web, Security, OAuth2 Client, Session JDBC, Data JPA, Validation, Actuator),
   Flyway, PostgreSQL driver, OpenAPI Generator, Testcontainers; Angular 22, `@angular/pwa`, `@angular/localize`,
   `ng-openapi-gen`, Vitest, ESLint, Prettier, Playwright.
-- **Docs:** `docs/architecture.md`, new `docs/adr/`, `AGENTS.md`, `openspec/config.yaml` (rule wording only).
+- **Docs:** new `README.md`, `docs/development/`, `docs/adr/`; `docs/architecture.md`, `AGENTS.md` (shortened),
+  `openspec/config.yaml` (rule wording only).

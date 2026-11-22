@@ -36,6 +36,9 @@ infra/keycloak/             realm import (kitchen-notebook)
 compose.yaml                infrastructure only
 .env.example                local settings; copied to .env (gitignored)
 docs/adr/                   one MADR file per ADR
+docs/development/           rules for developers and agents: backend, frontend, testing, tenancy
+README.md                   developer entry point: quick start, setup, commands, repo map, workflow
+AGENTS.md                   short agent entry point: links to README and docs/development, non-negotiables
 .github/workflows/          CI
 ```
 
@@ -274,7 +277,7 @@ with the passwords as container environment variables (D5, D11).
   where available. Unit tests (`*Test`, no Spring context) run with Surefire; integration tests (`*IT`, Spring and
   Testcontainers) run with Failsafe, so `mvn test` stays fast and `mvn verify` runs both.
 - Frontend: Vitest unit tests; Playwright `e2e/` with one test: sign in as Anna → shell shows her email → sign out.
-- **Test naming** (full rules in `AGENTS.md` "Coding Standards"; requirement ID first, so searching for an ID finds
+- **Test naming** (full rules in `docs/development/testing.md`; requirement ID first, so searching for an ID finds
   spec, contract and tests):
 
   ```

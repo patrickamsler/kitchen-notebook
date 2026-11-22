@@ -15,7 +15,7 @@
 - [ ] 2.3 Add `infra/keycloak/realm-kitchen-notebook.json`: client `kn-web` (confidential, redirect and post-logout URIs for `localhost:4200`), verify email on, SMTP → Mailpit, verified test users `anna@example.com` and `ben@example.com`, `${ENV}` placeholders for secrets; verify the realm imports on start
 - [ ] 2.4 Add `compose.yaml` with postgres 18, keycloak 26.x (`start-dev --import-realm`, port 8180), mailpit, minio, and a one-shot bucket `kn-media` creator; verify `docker compose up -d` gets all services healthy
 - [ ] 2.5 PLT-11 emails caught locally: trigger "forgot password" for Anna in Keycloak and verify the mail appears in Mailpit (localhost:8025)
-- [ ] 2.6 Write `AGENTS.md` "Environment Setup" (prerequisites: Docker, Java 25, Node LTS from `.nvmrc`; copy `.env.example`; `docker compose up -d`; service URLs and test users; init scripts run only on an empty volume, reset with `docker compose down -v`, which deletes local data) and verify by following it on a clean checkout
+- [ ] 2.6 Write the `README.md` sections "Quick start" and "Local setup" (prerequisites: Docker, Java 25, Node LTS from `.nvmrc`; copy `.env.example`; `docker compose up -d`; service URLs and test users; init scripts run only on an empty volume, reset with `docker compose down -v`, which deletes local data) and verify by following them on a clean checkout
 
 ## 3. API contract
 
@@ -26,7 +26,7 @@
 - [ ] 4.1 Create the Maven project in `backend/` (wrapper, Java 25, Spring Boot 4.x: Web, Security, OAuth2 Client, Session JDBC, Data JPA, Validation, Actuator, Flyway, PostgreSQL, Testcontainers, ArchUnit; Surefire for `*Test`, Failsafe for `*IT`) and verify `./mvnw -B verify` succeeds and runs both test kinds
 - [ ] 4.2 Configure the OpenAPI Generator Maven plugin (`spring`, `interfaceOnly`, `useTags`, `skipDefaultInterface`, Jakarta validation, output in `target/`) against `../api/openapi.yaml`; verify PLT-09 by a build that fails while `MeApi` is unimplemented
 - [ ] 4.3 Create the package layout from design D2 (`shared/{security,tenancy,web,persistence}`, empty feature packages with `package-info.java`) and an `ArchitectureTest` with the seven ArchUnit rules from D2: `shared` is independent of features; `api` doesn't use `domain` / `persistence`; repositories only from the same feature's `service`; public `@Service` methods return no `@Entity`; `@Transactional` only in `service` and `shared/tenancy`; no Spring stereotypes in `domain`; no `*Helper` / `*Utils` classes. Verify each rule fails against a deliberately violating fixture class and passes on the real code
-- [ ] 4.4 Write `AGENTS.md` "Coding Standards" for the backend layering (D2: transaction boundary, DTOs at the API, entities as POJOs, `<Entity>s` static helpers, capability-named `@Component` helpers), for queries (D6: explicit `notebookId` filter, derived methods vs JPQL text blocks vs native SQL, projections, fetching, soft delete, `*IT` per custom query) and for test naming (D11: JUnit `*Test` / `*IT`, `<REQID>_<behaviour>` with `@DisplayName("<REQ-ID> …")`, Vitest `it('<REQ-ID> …')`, Playwright `test('<REQ-ID> …', { tag: ['@<REQ-ID>'] })`, given/when/then); verify every PLT test in this change follows it
+- [ ] 4.4 Write `docs/development/backend.md` (D2 layering: transaction boundary, DTOs at the API, validation on DTOs, entities as POJOs, `<Entity>s` static helpers, capability-named `@Component` helpers, the ArchUnit rules; D6 queries: explicit `notebookId` filter, derived methods vs JPQL text blocks vs native SQL, projections, fetching, soft delete) and `docs/development/testing.md` (D11: JUnit `*Test` / `*IT`, `<REQID>_<behaviour>` with `@DisplayName("<REQ-ID> …")`, Vitest `it('<REQ-ID> …')`, Playwright `test('<REQ-ID> …', { tag: ['@<REQ-ID>'] })`, given/when/then, `*IT` per custom query, Testcontainers only); verify every PLT test in this change follows `testing.md`
 - [ ] 4.5 Configure `application.yaml` (env vars with local defaults, optional import of `../.env`, `ddl-auto=validate`, `open-in-view=false`, JSON logging, Actuator health only with details hidden, `server.forward-headers-strategy=framework`) and verify the app starts against Compose
 - [ ] 4.6 Add Flyway `V1__baseline.sql` (Spring Session JDBC tables, `kn_current_notebook_id()` / `kn_current_user_id()` helpers, default grants for `kn_app`). Flyway runs as `kn_owner`, the app as `kn_app`. Add the shared Testcontainers configuration (PostgreSQL 18 that copies `infra/postgres/init/` into `/docker-entrypoint-initdb.d`, with passwords as container env; Flyway as `kn_owner`, datasource as `kn_app`) and verify the migration on a fresh container
 - [ ] 4.7 Add the base entity in `shared/persistence` (UUIDv7 id, `@Version`, created/updated timestamps) and verify with a test-only entity that the id is generated and the version increments
@@ -46,7 +46,7 @@
 - [ ] 6.1 Implement `TenantContext` in `shared/tenancy` (`set_config(..., true)` for `app.notebook_id` and `app.user_id`; fails fast outside a transaction) and verify with a unit test for the no-transaction case
 - [ ] 6.2 Add a test-only migration location with table `rls_probe(id, notebook_id, label)`, `ENABLE` + `FORCE ROW LEVEL SECURITY` and the standard policy from design D5; verify the migration runs only in tests
 - [ ] 6.3 Write RLS tests running as `kn_app` on the shared Testcontainers configuration from 4.6: `PLT07_rowsOfOtherNotebookInvisible`, `PLT07_noTenantContextNoRows`, `PLT07_writeIntoOtherNotebookRejected`, `PLT07_contextDoesNotLeakAcrossPooledConnections` (pool size 1); verify all pass and that Flyway ran as `kn_owner`
-- [ ] 6.4 Document the tenant-table recipe (columns, policy template, grants, required RLS tests) in `AGENTS.md` "Coding Standards" and verify it matches the `rls_probe` migration
+- [ ] 6.4 Write `docs/development/tenancy.md` (roles and who creates what, `TenantContext` usage, the tenant-table recipe: columns, policy template, `FORCE`, grants, required RLS tests) and verify it matches the `rls_probe` migration
 
 ## 7. Frontend shell
 
@@ -58,16 +58,18 @@
 - [ ] 7.6 Implement `core/auth` (`AuthService` with a `me` signal from the generated client, auth guard redirecting to `/oauth2/authorization/keycloak`, sign-out form POST with the XSRF token) with Vitest tests for guard and service; verify the tests pass
 - [ ] 7.7 Implement the placeholder app shell in `layout/`: translated "Signed in as {email}" and Sign out, styled only with `kn-tokens.css` tokens, 48 px touch targets on mobile, light and dark; verify by eye in both color schemes at 390 px and 1280 px
 - [ ] 7.8 Add `@angular/pwa` with app-shell-only caching and `navigationUrls` excluding `/api/**`, `/oauth2/**`, `/login/**` and `/logout`; verify that sign-in still works with a production build served through the proxy
+- [ ] 7.9 Write `docs/development/frontend.md` (folder structure `core/` `layout/` `shared/` `features/`, generated API client only and never hand-written HTTP calls, signals, i18n marking and `i18n:check`, only `kn-tokens.css` tokens, 48 px touch targets on mobile, light and dark, the PWA navigation exclusions) and verify it matches the shell built in 7.6–7.8
 
 ## 8. End-to-end and CI
 
 - [ ] 8.1 Scaffold Playwright in `frontend/e2e/` and write `PLT02_PLT04_signInShowsEmailAndSignOut` (sign in as Anna at Keycloak → shell shows her email → sign out → `/api/me` returns 401); verify it passes locally
 - [ ] 8.2 Add GitHub Actions workflows: `backend` (Temurin 25, `./mvnw -B verify`), `frontend` (`npm ci`, lint, test, build, `i18n:check`, OpenAPI lint), `e2e` (compose up, backend, `ng serve`, Playwright); verify all three jobs are green on a PR
-- [ ] 8.3 Fill `AGENTS.md` "Commands" (start infra, run backend, run frontend, generate the client, run tests, e2e, i18n check) and update "Repository Structure" with `api/`, `infra/`, `compose.yaml`, `docs/adr/`; verify each command runs as written
+- [ ] 8.3 Write the rest of `README.md` for developers: what the Kitchen Notebook is, "Commands" (start infra, run backend, run frontend, generate the client, unit and integration tests, e2e, lint, i18n check), repository map (`api/`, `backend/`, `frontend/`, `infra/`, `compose.yaml`, `docs/`, `docs/adr/`, `docs/development/`, `openspec/`), how work happens (OpenSpec propose → apply → archive; contract-first API changes), and links to `docs/`; verify each command runs as written and all links resolve
+- [ ] 8.4 Rewrite `AGENTS.md` to be short (about 40 lines): one-line project summary; pointers to `README.md` for setup and commands and to `docs/development/{backend,frontend,testing,tenancy}.md` to read before working in that area; the non-negotiables (explicit `notebookId` + RLS for tenant tables, no entities across the service boundary, contract-first `api/openapi.yaml`, all text in translation files, only `kn-tokens.css` tokens, tests named after requirement IDs); the existing Boundaries section. Remove the TODO sections. Verify it has no duplicated setup or command detail
 
 ## 9. Integration check
 
-- [ ] 9.1 PLT-11 fresh clone to signed-in user: on a clean clone, follow `AGENTS.md` only, sign in as the documented test user and verify the shell shows the email; fix any documentation gaps found
+- [ ] 9.1 PLT-11 fresh clone to signed-in user: on a clean clone, follow only the `README.md` quick start, sign in as the documented test user and verify the shell shows the email; fix any documentation gaps found
 
 ## Workflow follow-up
 
